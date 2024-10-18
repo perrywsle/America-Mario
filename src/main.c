@@ -1,7 +1,3 @@
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#include "cimgui.h"
-#include "imgui_impl_sdl.h"
-#include "imgui_impl_opengl3.h"
 #include <stdio.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
@@ -30,10 +26,6 @@ int main(int argc, char* argv[]) {
     initHillNoise(hn, terrainSizes, sizeof(terrainSizes) / sizeof(terrainSizes[0]));
 
     SDL_Event e;
-    // setup imgui
-    igCreateContext(NULL);
-    ImGuiIO io = *igGetIO();
-    printf("Display Size: %f x %f\n", io.DisplaySize.x, io.DisplaySize.y);
 
     // Initialize game data
     initializeGame(&g);
