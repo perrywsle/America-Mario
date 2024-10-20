@@ -123,15 +123,6 @@ void renderHearts(SDL_Renderer* renderer, int* health){
     }
 }
 
-void drawSquareGrid(SDL_Renderer* renderer, int cols, int squareSize, float cameraX) {
-    SDL_SetRenderDrawColor(renderer, 30, 74, 32, 255);  // Grid color
-
-    for (int j = 0; j < cols; j++) {
-        SDL_Rect squareRect = {j * squareSize - cameraX, GROUND_LEVEL + squareSize - squareSize / 2, squareSize, squareSize};
-        SDL_RenderFillRect(renderer, &squareRect);
-    }
-}
-
 void drawShooter(SDL_Renderer* renderer, float shooterX, float shooterY, float cameraX) {
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);  // Red shooter
     SDL_Rect shooterRect = {(int)(shooterX - cameraX), (int)(shooterY), 50, 50};
@@ -196,6 +187,16 @@ void drawAmmo(SDL_Renderer* renderer, Collectible ammos[], int* ammo, float came
     }
 }
 
+void renderPauseButton(SDL_Renderer* renderer) {
+    // Set color based on pause state
+    SDL_Rect pauseButtonRect = {700, 50, 50, 50};
+    SDL_SetRenderDrawColor(renderer, g.isPaused ? 255 : 0, 0, 0, 255); // Red when paused, black otherwise
+    SDL_RenderFillRect(renderer, &pauseButtonRect);
+
+    // Render button text if needed (optional)
+    // You can draw "PAUSE" text here if you have a font set up
+}
+
 void render(SDL_Renderer* renderer,
             SDL_Texture* texture,
             Platform platforms[],
@@ -238,6 +239,8 @@ void render(SDL_Renderer* renderer,
 
     // Render healthbar
     renderHearts(renderer, health);
+
+    renderPauseButton(renderer);
 
     // Present the rendered frame
     SDL_RenderPresent(renderer);

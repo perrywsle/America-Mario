@@ -20,6 +20,11 @@
 #define GROUND_LEVEL (SCREEN_HEIGHT - 50)
 #define LEFT_BOUNDARY 0
 
+#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
+#include "cimgui.h"
+#include "imgui_impl_sdl.h"
+#include "imgui_impl_opengl3.h"
+
 
 typedef struct {
     float x, y;
@@ -77,6 +82,7 @@ typedef struct {
     Uint32 lastTime;
     bool isPaused;
     bool quit;
+    bool showDebugWindow;
 } GameData;
 
 extern GameData g;

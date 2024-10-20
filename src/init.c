@@ -1,6 +1,16 @@
 #include "init.h"
 #include <SDL2/SDL_image.h>
 
+#if defined(IMGUI_IMPL_OPENGL_LOADER_GL3W)
+#include "GL/gl3w.h"    // Initialize with gl3wInit()
+#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLEW)
+#include <GL/glew.h>    // Initialize with glewInit()
+#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLAD)
+#include <glad/glad.h>  // Initialize with gladLoadGL()
+#else
+#include IMGUI_IMPL_OPENGL_LOADER_CUSTOM
+#endif
+
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
 SDL_Texture* backgroundTexture = NULL;
@@ -8,32 +18,83 @@ TTF_Font* font = NULL;
 
 bool init() {
     bool success = true;
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+    
+    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         printf("SDL_Init Error: %s\n", SDL_GetError());
-        success = false;
+        return false;
     }
 
-    window = SDL_CreateWindow("Shooter Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+    // Setup OpenGL attributes
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+
+    window = SDL_CreateWindow(
+        "Shooter Game with ImGui",
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        SCREEN_WIDTH, SCREEN_HEIGHT,
+        SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
+    );
+    
     if (window == NULL) {
         printf("SDL_CreateWindow Error: %s\n", SDL_GetError());
-        success = false;
+        return false;
     }
 
+    // Create OpenGL context
+    SDL_GLContext gl_context = SDL_GL_CreateContext(window);
+    if (gl_context == NULL) {
+        printf("OpenGL context creation failed: %s\n", SDL_GetError());
+        return false;
+    }
+    
+    SDL_GL_MakeCurrent(window, gl_context);
+    SDL_GL_SetSwapInterval(1); // Enable vsync
+
+        // Initialize OpenGL loader
+    #if defined(IMGUI_IMPL_OPENGL_LOADER_GL3W)
+    bool err = gl3wInit() != 0;
+    #elif defined(IMGUI_IMPL_OPENGL_LOADER_GLEW)
+    bool err = glewInit() != GLEW_OK;
+    #elif defined(IMGUI_IMPL_OPENGL_LOADER_GLAD)
+    bool err = gladLoadGL() == 0;
+    #endif
+    if (err)
+    {
+        SDL_Log("Failed to initialize OpenGL loader!");
+        return 1;
+    }
+
+    // Initialize ImGui
+    igCreateContext(NULL);
+    int windowWidth, windowHeight;
+    SDL_GetWindowSize(window, &windowWidth, &windowHeight);
+    ImGuiIO* io = igGetIO();
+    io->DisplaySize = (ImVec2){(float)windowWidth, (float)windowHeight};
+    ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
+    ImGui_ImplOpenGL3_Init("#version 130");
+    igStyleColorsDark(NULL);
+
+    // Create renderer with OpenGL support
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (renderer == NULL) {
         printf("SDL_CreateRenderer Error: %s\n", SDL_GetError());
-        success = false;
+        return false;
     }
 
     if (TTF_Init() == -1) {
         printf("Failed to initialize SDL_ttf: %s\n", TTF_GetError());
-        success = false;
+        return false;
     }
 
-    font = TTF_OpenFont("arial.ttf", 24);  
+    font = TTF_OpenFont("arial.ttf", 24);
     if (font == NULL) {
         printf("Failed to load font: %s\n", TTF_GetError());
-        success = false;
+        return false;
     }
 
     return success;
@@ -82,6 +143,7 @@ void initializeGame(GameData* state) {
     state->lastTime = SDL_GetTicks(); 
     state->isPaused = false; 
     state->quit = false; 
+    state->showDebugWindow = false;
 
     Platform initialPlatforms[NUM_PLATFORM] = {
         {100, 500, 600, 30},
