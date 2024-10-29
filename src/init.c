@@ -13,8 +13,14 @@
 
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
-SDL_Texture* backgroundTexture = NULL;
 TTF_Font* font = NULL;
+
+SDL_Texture* backgroundTexture = NULL;
+SDL_Texture* pauseTexture = NULL;
+SDL_Texture* enemy1SpriteSheet = NULL;
+SDL_Texture* enemy2SpriteSheet = NULL;
+
+SDL_Surface* imgPause = NULL;
 
 bool init() {
     bool success = true;
@@ -103,9 +109,35 @@ bool init() {
 bool loadMedia() {
     bool success = true;
 
-    backgroundTexture = IMG_LoadTexture(renderer, "background.png");
+    backgroundTexture = IMG_LoadTexture(renderer, "images/background.png");
     if (backgroundTexture == NULL) {
         printf("Failed to load background texture! SDL_image Error: %s\n", IMG_GetError());
+        success = false;
+    }
+
+    imgPause = IMG_Load("images/pause.png");
+    if (imgPause == NULL)
+    {
+        printf("Failed to load pause image! SDL_image Error: %s\n", IMG_GetError());
+        success = false;
+    }
+    pauseTexture = SDL_CreateTextureFromSurface(renderer, imgPause);
+    if (pauseTexture == NULL) {
+        printf("Failed to load pause texture! SDL_image Error: %s\n", IMG_GetError());
+        success = false;
+    }
+    SDL_FreeSurface(imgPause);
+
+    enemy1SpriteSheet = IMG_LoadTexture(renderer, "Assets/Characters/Enemies/Ghost/Spritesheets/ghost.png");
+    if (!enemy1SpriteSheet) {
+        printf("Error loading sprite sheet\n");
+        success = false;
+    }
+
+
+    enemy2SpriteSheet = IMG_LoadTexture(renderer, "Assets/Characters/Enemies/Crab/Spritesheets/crab-walk.png");
+    if (!enemy2SpriteSheet) {
+        printf("Error loading sprite sheet\n");
         success = false;
     }
 
@@ -153,15 +185,15 @@ void initializeGame(GameData* state) {
 
     // Initialize enemies
     Enemy initialEnemies1[NUM_ENEMIES1] = {
-        {500, 400, 30, 30, true, 0, 100.0f},
-        {1200, 300, 30, 30, true, 0, 100.0f},
-        {1900, 200, 30, 30, true, 0, 100.0f}
+        {500, 400, 30, 30, true, 0, 100.0f, enemy1SpriteSheet, 30, 30, 4},
+        {1200, 300, 30, 30, true, 0, 100.0f, enemy1SpriteSheet, 30, 30, 4},
+        {1900, 200, 30, 30, true, 0, 100.0f, enemy1SpriteSheet, 30, 30, 4}
     };
 
     Enemy initialEnemies2[NUM_ENEMIES2] = {
-        {250, 470, 30, 30, true, 0, 100.0f},  
-        {1200, 370, 30, 30, true, 0, 100.0f},
-        {1900, 270, 30, 30, true, 0, 100.0f}
+        {250, 470, 30, 30, true, 0, 100.0f, enemy2SpriteSheet, 40, 30, 4},  
+        {1200, 370, 30, 30, true, 0, 100.0f, enemy2SpriteSheet, 40, 30, 4},
+        {1900, 270, 30, 30, true, 0, 100.0f, enemy2SpriteSheet, 40, 30, 4}
     };
 
     // Initialize collectibles

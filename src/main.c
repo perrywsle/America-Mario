@@ -123,17 +123,7 @@ int main(int argc, char* argv[]) {
             }
 
             // Render game
-            render(renderer, backgroundTexture, g.platforms, g.collectibles,
-                    g.ammos, g.bullets, g.enemies1,
-                    g.enemies2,
-                    g.shooterY,
-                    g.cameraX,
-                    g.shooterX,
-                    &g.score,
-                    &g.health,
-                    &g.ammo,
-                    font,
-                    hn);
+            render(renderer, backgroundTexture, pauseTexture, font, hn);
         }
         
         if(g.isPaused) {
@@ -150,7 +140,7 @@ int main(int argc, char* argv[]) {
             ImVec2 center = {SCREEN_WIDTH * 0.5f, SCREEN_HEIGHT * 0.5f};
             ImVec2 window_size = {200.0f, 120.0f};
             ImVec2 window_pos = {
-                center.x - window_size.x * 0.5f,
+                center.x,
                 center.y - window_size.y * 0.5f
             };
             

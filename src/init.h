@@ -32,11 +32,15 @@ typedef struct {
 } Platform;
 
 typedef struct {
-    float x, y;     
-    float width, height; 
-    bool active;    
-    int currentFrame;
-    float speed;
+    float x, y;               // Position of the enemy
+    int width, height;        // Size of the enemy (one frame)
+    bool active;              // Whether the enemy is active
+    int currentFrame;         // Current animation frame
+    float speed;              // Movement speed of the enemy
+    SDL_Texture* texture;     // Texture for the sprite sheet
+    int frameWidth;           // Width of one frame in the sprite sheet
+    int frameHeight;          // Height of one frame in the sprite sheet
+    int totalFrames;          // Total number of frames in the sprite sheet
 } Enemy;
 
 typedef struct {
@@ -95,6 +99,9 @@ void initializeGame(GameData* state);
 extern SDL_Window* window;
 extern SDL_Renderer* renderer;
 extern SDL_Texture* backgroundTexture;
+extern SDL_Texture* pauseTexture;
+extern SDL_Texture* enemy1SpriteSheet;
+extern SDL_Texture* enemy2SpriteSheet;
 extern TTF_Font* font;
 
 #endif

@@ -158,7 +158,7 @@ void updateEnemies(Enemy enemies1[], Enemy enemies2[], float shooterX, float sho
                 }
                 
                 // Update animation frame
-                enemies1[i].currentFrame = (enemies1[i].currentFrame + 1) % 4;
+                enemies1[i].currentFrame = (enemies1[i].currentFrame + 1) % enemies1[i].totalFrames;
             }
         }
     }
