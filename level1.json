@@ -1,0 +1,201 @@
+{
+  "shooters": [
+    {
+      "x": 0.0,
+      "y": 1080.0,  
+      "health": 3,
+      "ammo": 3,
+      "score": 0,
+      "onGround": true,
+      "velocityY": 0.0,
+      "currentFrame": 0,
+      "spriteWidth": 32,
+      "spriteHeight": 32,
+      "totalFrames": 4,
+      "animationTimer": 0.0,
+      "frameDelay": 0.95,
+      "time": 0.0
+    },
+    {
+      "x": 0.0,
+      "y": 1080.0,  
+      "health": 3,
+      "ammo": 3,
+      "score": 0,
+      "onGround": true,
+      "velocityY": 0.0,
+      "currentFrame": 0,
+      "spriteWidth": 32,
+      "spriteHeight": 32,
+      "totalFrames": 6,
+      "animationTimer": 0.0,
+      "frameDelay": 0.95,
+      "time": 0.0
+    }
+  ],
+  "isPlayer1Turn": true,
+  "deltaTime": 0.0,
+  "platforms": [
+    {
+      "x": 400,
+      "y": 1000,
+      "width": 600,
+      "height": 50
+    },
+    {
+      "x": 800,
+      "y": 400,
+      "width": 600,
+      "height": 50
+    },
+    {
+      "x": 1300,
+      "y": 800,
+      "width": 600,
+      "height": 50
+    }
+  ],
+  "enemies1": [
+    {
+      "x": 250,
+      "y": 350,
+      "width": 60,
+      "height": 60,
+      "active": true,
+      "currentFrame": 0,
+      "speed": 100.0,
+      "sprite": "enemy1SpriteSheet", 
+      "spriteWidth": 32,
+      "spriteHeight": 32,
+      "totalFrames": 4,
+      "animationTimer": 0.0,
+      "frameDelay": 0.95
+    },
+    {
+      "x": 600,
+      "y": 275,
+      "width": 60,
+      "height": 60,
+      "active": true,
+      "currentFrame": 0,
+      "speed": 100.0,
+      "sprite": "enemy1SpriteSheet",
+      "spriteWidth": 32,
+      "spriteHeight": 32,
+      "totalFrames": 4,
+      "animationTimer": 0.0,
+      "frameDelay": 0.95
+    },
+    {
+      "x": 950,
+      "y": 200,
+      "width": 60,
+      "height": 60,
+      "active": true,
+      "currentFrame": 0,
+      "speed": 100.0,
+      "sprite": "enemy1SpriteSheet",
+      "spriteWidth": 32,
+      "spriteHeight": 32,
+      "totalFrames": 4,
+      "animationTimer": 0.0,
+      "frameDelay": 0.95
+    }
+  ],
+  "enemies2": [
+    {
+      "x": 450,
+      "y": 950,
+      "width": 60,
+      "height": 40,
+      "active": true,
+      "currentFrame": 0,
+      "speed": 100.0,
+      "sprite": "enemy2SpriteSheet", 
+      "spriteWidth": 48,
+      "spriteHeight": 32,
+      "totalFrames": 4,
+      "platformIndex": 0,
+      "animationTimer": 0.0,
+      "frameDelay": 0.9
+    },
+    {
+      "x": 900,
+      "y": 350,
+      "width": 60,
+      "height": 40,
+      "active": true,
+      "currentFrame": 0,
+      "speed": 100.0,
+      "sprite": "enemy2SpriteSheet",
+      "spriteWidth": 48,
+      "spriteHeight": 32,
+      "totalFrames": 4,
+      "platformIndex": 1,
+      "animationTimer": 0.0,
+      "frameDelay": 0.9
+    },
+    {
+      "x": 1300,
+      "y": 750,
+      "width": 200,
+      "height": 200,
+      "active": true,
+      "currentFrame": 0,
+      "speed": 100.0,
+      "sprite": "enemy2SpriteSheet",
+      "spriteWidth": 48,
+      "spriteHeight": 32,
+      "totalFrames": 4,
+      "platformIndex": 2,
+      "animationTimer": 0.0,
+      "frameDelay": 0.9
+    }
+  ],
+  "collectibles": [
+    {
+      "x": 500,
+      "y": 900,
+      "width": 15,
+      "height": 30,
+      "collected": false
+    },
+    {
+      "x": 1000,
+      "y": 300,
+      "width": 15,
+      "height": 30,
+      "collected": false
+    },
+    {
+      "x": 1500,
+      "y": 700,
+      "width": 15,
+      "height": 30,
+      "collected": false
+    }
+  ],
+  "ammos": [
+    {
+      "x": 600,
+      "y": 900,
+      "width": 15,
+      "height": 30,
+      "collected": false
+    },
+    {
+      "x": 1100,
+      "y": 300,
+      "width": 15,
+      "height": 30,
+      "collected": false
+    },
+    {
+      "x": 900,
+      "y": 700,
+      "width": 15,
+      "height": 30,
+      "collected": false
+    }
+  ]
+}

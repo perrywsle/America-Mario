@@ -28,7 +28,7 @@ ifeq ($(UNAME_S), Windows_NT) #WINDOWS
 endif
 
 CFLAGS := -Wall -std=c99 -Igl3w/include -I/opt/X11/include -I$(IMGUI_INCLDIR) -I$(IMGUI_IMPL_INCLDIR) -I$(INCLDIR) -I$(SDL2_INCLDIR) -I$(SRCDIR) -g -DIMGUI_IMPL_OPENGL_LOADER_GL3W -DIMGUI_IMPL_API=""
-LFLAGS := -lSDL2 -lGL -lGLU -lm -lSDL2_image $(CIMGUI_LIB) -lSDL2_ttf -lstdc++ -Wl,-rpath,.
+LFLAGS := -lSDL2 -lGL -lGLU -lm -lcjson -lSDL2_image $(CIMGUI_LIB) -lSDL2_ttf -lstdc++ -Wl,-rpath,.
 
 SDL_IMPL_CFLAGS = -I$(INCLDIR) -I$(IMGUI_INCLDIR) -I$(IMGUI_IMPL_INCLDIR) -I/opt/X11/include -I$(SDL2_INCLDIR) -I$(GLEW_INCLDIR) -DIMGUI_IMPL_API="extern \"C\""
 OPENGL3_IMPL_CFLAGS = -I$(INCLDIR) -Igl3w/include -I$(IMGUI_INCLDIR) -I$(IMGUI_IMPL_INCLDIR) -DIMGUI_IMPL_API="extern \"C\"" 

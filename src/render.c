@@ -57,73 +57,107 @@ void freeHillNoise(HillNoise* hn) {
     free(hn->offsets);
 }
 
-void renderTerrains(SDL_Renderer* renderer, HillNoise* hn, float startX, float cameraX, SDL_Color color, float heightScale) {
+void renderTerrains(SDL_Renderer* renderer, HillNoise* hn, float startX, SDL_Color color, float heightScale, int screen_height) {
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a); // Set terrain color
 
     for (float x = startX; x < WORLD_WIDTH; x += 1) {
         float yNoise = evaluateHillNoise(hn, 3*x); // Noise-based terrain generation
-        float y = SCREEN_HEIGHT - (yNoise * heightScale); // Scale and adjust height
+        float y = screen_height - (yNoise * heightScale); // Scale and adjust height
         
         SDL_Rect filledArea = {
-            (int)(x * SQUARE_WIDTH - cameraX),  
+            (int)(x * SQUARE_WIDTH - g.cameraX),  
             (int)(y),        
             SQUARE_WIDTH,                       
-            (int)(SCREEN_HEIGHT - y)            
+            (int)(screen_height - y)            
         };
         SDL_RenderFillRect(renderer, &filledArea);
     }
 }
 
-void renderText(SDL_Renderer* renderer, TTF_Font* font) {
-    char scoreText[20];
-    snprintf(scoreText, sizeof(scoreText), "Score: %d", g.score);
-    char ammoText[20];
-    snprintf(ammoText, sizeof(ammoText), "Ammo: %d", g.ammo);
+void renderText(SDL_Renderer* renderer, TTF_Font* font, int screen_width) {
+    int currentPlayer = g.isPlayer1Turn ? 0 : 1;
 
-    SDL_Color textColor = {255, 255, 255, 255}; // White text
-    SDL_Surface* textSurface1 = TTF_RenderText_Solid(font, scoreText, textColor);
-    SDL_Surface* textSurface2 = TTF_RenderText_Solid(font, ammoText, textColor);
-    
-    if(!textSurface1 || !textSurface2) {
-        printf("Unable to render text surface: %s\n", TTF_GetError());
-        return;
+    // Create text for current turn indicator
+    char turnText[50];
+    snprintf(turnText, sizeof(turnText), "Player %d's Turn", currentPlayer + 1);
+
+    // Render text only for the current player's stats
+    char scoreText[30];
+    snprintf(scoreText, sizeof(scoreText), "P%d Score: %d", currentPlayer + 1, g.shooters[currentPlayer].score);
+    char ammoText[30];
+    snprintf(ammoText, sizeof(ammoText), "P%d Ammo: %d", currentPlayer + 1, g.shooters[currentPlayer].ammo);
+    char timeText[30];
+    snprintf(timeText, sizeof(timeText), "P%d Time: %.2lf", currentPlayer + 1, g.shooters[currentPlayer].time);
+
+    SDL_Color textColor = {255, 255, 0, 255}; // Yellow for active player
+
+    // Render turn indicator
+    SDL_Surface* turnSurface = TTF_RenderText_Solid(font, turnText, (SDL_Color){255, 255, 255, 255});
+    if (turnSurface) {
+        SDL_Texture* turnTexture = SDL_CreateTextureFromSurface(renderer, turnSurface);
+        SDL_Rect turnRect = {screen_width / 2 - turnSurface->w / 2, 10, turnSurface->w, turnSurface->h};
+        SDL_RenderCopy(renderer, turnTexture, NULL, &turnRect);
+        SDL_FreeSurface(turnSurface);
+        SDL_DestroyTexture(turnTexture);
     }
 
-    SDL_Texture* textTexture1 = SDL_CreateTextureFromSurface(renderer, textSurface1);
-    SDL_Texture* textTexture2 = SDL_CreateTextureFromSurface(renderer, textSurface2);
-    SDL_FreeSurface(textSurface1);
-    SDL_FreeSurface(textSurface2);
-    
-    if(!textTexture1 || !textTexture2) {
-        printf("Unable to create texture from rendered text: %s\n", SDL_GetError());
-        return;
-    }
+    // Render player stats
+    SDL_Surface* surfaces[] = {
+        TTF_RenderText_Solid(font, scoreText, textColor),
+        TTF_RenderText_Solid(font, ammoText, textColor),
+        TTF_RenderText_Solid(font, timeText, textColor)
+    };
 
-    SDL_Rect renderQuad1 = {10, 10, textSurface1->w, textSurface1->h}; 
-    SDL_Rect renderQuad2 = {200, 10, textSurface1->w, textSurface1->h}; 
-    SDL_RenderCopy(renderer, textTexture1, NULL, &renderQuad1);
-    SDL_RenderCopy(renderer, textTexture2, NULL, &renderQuad2);
-    SDL_DestroyTexture(textTexture1);
-    SDL_DestroyTexture(textTexture2);
+    int xOffset = currentPlayer * 400;
+    int yPositions[] = {40, 70, 100};
+
+    for (int j = 0; j < 3; j++) {
+        if (surfaces[j]) {
+            SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surfaces[j]);
+            SDL_Rect renderQuad = {10 + xOffset, yPositions[j], surfaces[j]->w, surfaces[j]->h};
+            SDL_RenderCopy(renderer, texture, NULL, &renderQuad);
+            SDL_FreeSurface(surfaces[j]);
+            SDL_DestroyTexture(texture);
+        }
+    }
 }
 
 void renderHearts(SDL_Renderer* renderer) {
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); //red
-    for (int i = 0; i < g.health; i++) {
-        SDL_Rect heartRect = {10 + i * 40, 50, 30, 30};
+    int currentPlayer = g.isPlayer1Turn ? 0 : 1;
+
+    SDL_Color heartColor = {255, 0, 0, 255}; // Bright red for active player
+    SDL_SetRenderDrawColor(renderer, heartColor.r, heartColor.g, heartColor.b, heartColor.a);
+
+    int xOffset = currentPlayer * 400;
+    for (int i = 0; i < g.shooters[currentPlayer].health; i++) {
+        SDL_Rect heartRect = {10 + xOffset + i * 60, 130, 50, 50};
         SDL_RenderFillRect(renderer, &heartRect);
     }
 }
 
 void drawShooter(SDL_Renderer* renderer) {
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);  // Red shooter
-    SDL_Rect shooterRect = {(int)(g.shooterX - g.cameraX), (int)(g.shooterY), 50, 50};
-    SDL_RenderFillRect(renderer, &shooterRect);
+    Shooter* currentShooter = &g.shooters[g.isPlayer1Turn ? 0 : 1];
+    SDL_Texture* currentTexture = g.isPlayer1Turn ? shooter1SpriteSheetIdle : shooter2SpriteSheetIdle;
+
+    SDL_Rect srcRect;
+    srcRect.x = currentShooter->currentFrame * currentShooter->frameWidth;
+    srcRect.y = 0;
+    srcRect.w = currentShooter->frameWidth;
+    srcRect.h = currentShooter->frameHeight;
+
+    SDL_Rect dstRect = {
+        (int)(currentShooter->x - g.cameraX),
+        (int)(currentShooter->y),
+        100,
+        100
+    };
+
+    SDL_RenderCopy(renderer, currentTexture, &srcRect, &dstRect);
 }
 
 void drawPlatforms(SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);  // Blue platforms
-    for (int i = 0; i < NUM_PLATFORM; i++) {
+    for (int i = 0; i < g.numPlatforms; i++) {
         SDL_Rect platformRect = {
             (int)(g.platforms[i].x - g.cameraX), 
             (int)(g.platforms[i].y), 
@@ -136,7 +170,7 @@ void drawPlatforms(SDL_Renderer* renderer) {
 
 void drawCollectibles(SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);  // Yellow collectibles
-    for (int i = 0; i < NUM_COLLECTIBLES; i++) {
+    for (int i = 0; i < g.numCollectibles; i++) {
         if (!g.collectibles[i].collected) {
             SDL_Rect collectibleRect = {
                 (int)(g.collectibles[i].x - g.cameraX), 
@@ -149,70 +183,84 @@ void drawCollectibles(SDL_Renderer* renderer) {
     }
 }
 
-void drawEnemies2(SDL_Renderer* renderer) {
-    for (int i = 0; i < NUM_ENEMIES2; i++) {
-        if (g.enemies2[i].active) {
-            // Calculate the source rectangle from the sprite sheet
-            SDL_Rect srcRect;
-            srcRect.x = g.enemies2[i].currentFrame * g.enemies2[i].frameWidth;
-            srcRect.y = 0;  // Assuming all frames are in one row
-            srcRect.w = g.enemies2[i].frameWidth;
-            srcRect.h = g.enemies2[i].frameHeight;
-
-            // Calculate the destination rectangle on the screen
-            SDL_Rect dstRect;
-            dstRect.x = (int)(g.enemies2[i].x - g.cameraX);  // Adjust for camera position
-            dstRect.y = (int)(g.enemies2[i].y);
-            dstRect.w = g.enemies2[i].frameWidth;  // You can adjust size if needed
-            dstRect.h = g.enemies2[i].frameHeight;
-
-            // Render the enemy using the sprite sheet
-            SDL_RenderCopy(renderer, g.enemies2[i].texture, &srcRect, &dstRect);
-        }
-    }
-}
-
 void drawEnemies1(SDL_Renderer* renderer) {
-    for (int i = 0; i < NUM_ENEMIES1; i++) {
+    for (int i = 0; i < g.numEnemies1; i++) {
         if (g.enemies1[i].active) {
-            // Calculate the source rectangle from the sprite sheet
             SDL_Rect srcRect;
             srcRect.x = g.enemies1[i].currentFrame * g.enemies1[i].frameWidth;
-            srcRect.y = 0;  // Assuming all frames are in one row
+            srcRect.y = 0;  
             srcRect.w = g.enemies1[i].frameWidth;
             srcRect.h = g.enemies1[i].frameHeight;
 
-            // Calculate the destination rectangle on the screen
             SDL_Rect dstRect;
-            dstRect.x = (int)(g.enemies1[i].x - g.cameraX);  // Adjust for camera position
+            dstRect.x = (int)(g.enemies1[i].x - g.cameraX); 
             dstRect.y = (int)(g.enemies1[i].y);
-            dstRect.w = g.enemies1[i].frameWidth;  // You can adjust size if needed
-            dstRect.h = g.enemies1[i].frameHeight;
+            dstRect.w = g.enemies1[i].width;  
+            dstRect.h = g.enemies1[i].height;
 
-            // Render the enemy using the sprite sheet
             SDL_RenderCopy(renderer, g.enemies1[i].texture, &srcRect, &dstRect);
         }
     }
 }
 
+void drawEnemies2(SDL_Renderer* renderer) {
+    for (int i = 0; i < g.numEnemies2; i++) {
+        if (g.enemies2[i].active) {
+            SDL_Rect srcRect;
+            srcRect.x = g.enemies2[i].currentFrame * g.enemies2[i].frameWidth;
+            srcRect.y = 0; 
+            srcRect.w = g.enemies2[i].frameWidth;
+            srcRect.h = g.enemies2[i].frameHeight;
+
+            SDL_Rect dstRect;
+            dstRect.x = (int)(g.enemies2[i].x - g.cameraX); 
+            dstRect.y = (int)(g.enemies2[i].y);
+            dstRect.w = g.enemies2[i].width;  
+            dstRect.h = g.enemies2[i].height;
+
+            SDL_RenderCopy(renderer, g.enemies2[i].texture, &srcRect, &dstRect);
+        }
+    }
+}
+
 void drawBullets(SDL_Renderer* renderer) {
-    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255); // Yellow
+    static int currentFrame = 0;
+    static float animationTimer = 0;  
+    const float frameDelay = 0.1f;    
+    const int totalFrames = 4;        
+    
+    // Update animation timer
+    animationTimer += g.deltaTime;
+    if (animationTimer >= frameDelay) {
+        currentFrame = (currentFrame + 1) % totalFrames;
+        animationTimer = 0;
+    }
+    int frameWidth = 16;  
+
     for (int i = 0; i < g.ammo + 1; i++) {
         if (g.bullets[i].active) {
-            SDL_Rect bulletRect = {
+            SDL_Rect srcRect = {
+                currentFrame * frameWidth, 
+                0,                         
+                frameWidth,                
+                16                         
+            }; 
+
+            SDL_Rect dstRect = {
                 (int)(g.bullets[i].x - g.cameraX), 
                 (int)g.bullets[i].y, 
-                10, 
-                5
-            }; 
-            SDL_RenderFillRect(renderer, &bulletRect);
+                40,  // Display width
+                40   // Display height
+            };
+
+            SDL_RenderCopy(renderer, bulletSpriteSheet, &srcRect, &dstRect);
         }
     }
 }
 
 void drawAmmo(SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 255, 200, 0, 255);  // Yellow collectibles
-    for (int i = 0; i < NUM_AMMOS; i++) {
+    for (int i = 0; i < g.numAmmos; i++) {
         if (!g.ammos[i].collected) {
             SDL_Rect ammoRect = {
                 (int)(g.ammos[i].x - g.cameraX), 
@@ -225,25 +273,38 @@ void drawAmmo(SDL_Renderer* renderer) {
     }
 }
 
+void drawFinishFlag(SDL_Renderer* renderer, int screen_height) {
+    SDL_SetRenderDrawColor(renderer, 200, 200, 200, 200);
+    SDL_Rect flagRect = {
+        (int)(WORLD_WIDTH - g.cameraX),
+        screen_height - 600,
+        50,
+        600
+    };
+    SDL_RenderFillRect(renderer, &flagRect);
+}
+
 void render(SDL_Renderer* renderer, 
             SDL_Texture* textureBackground, 
             SDL_Texture* texturePause, 
             TTF_Font* font, 
-            HillNoise* hn) {
+            HillNoise* hn,
+            int screen_width,
+            int screen_height) {
     // Clear the screen
     SDL_RenderClear(renderer);
 
     // Render background
-    SDL_Rect bgRect = {(int)(g.cameraX), 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+    SDL_Rect bgRect = {(int)(g.cameraX), 0, screen_width, screen_height};
     SDL_RenderCopy(renderer, textureBackground, &bgRect, NULL);
 
     // Render pause button
-    SDL_Rect pauseButtonRect = {700, 50, 50, 50};
+    SDL_Rect pauseButtonRect = {1820, 50, 100, 100};
     SDL_RenderCopy(renderer, texturePause, NULL, &pauseButtonRect);
 
     // Render generated terrain
-    renderTerrains(renderer, hn, 0, g.cameraX, (SDL_Color){34, 139, 34, 255}, 500);
-    renderTerrains(renderer, hn, 0, g.cameraX, (SDL_Color){144, 238, 144, 255}, 300);
+    renderTerrains(renderer, hn, 0, (SDL_Color){34, 139, 34, 255}, 500, screen_height);
+    renderTerrains(renderer, hn, 0, (SDL_Color){144, 238, 144, 255}, 300, screen_height);
 
     // Draw game elements
     drawPlatforms(renderer);
@@ -253,9 +314,10 @@ void render(SDL_Renderer* renderer,
     drawEnemies2(renderer);
     drawShooter(renderer);
     drawBullets(renderer);
+    drawFinishFlag(renderer, screen_height);
 
     // Render UI elements
-    renderText(renderer, font);
+    renderText(renderer, font, screen_width);
     renderHearts(renderer);
 
     // Present the rendered frame

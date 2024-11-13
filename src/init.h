@@ -2,29 +2,36 @@
 #define INIT_H
 
 #include <stdbool.h>
+#include <stdlib.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+#include <cjson/cJSON.h>
+#include <time.h>
+#include <sys/stat.h>
+#include <dirent.h>
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
-#define WORLD_WIDTH 10000
+
+#define WORLD_WIDTH 3000
 #define SHOOTER_SPEED 200
-#define JUMP_SPEED 400
-#define GRAVITY 580
-#define NUM_PLATFORM 3
-#define NUM_ENEMIES1 3
-#define NUM_ENEMIES2 3
-#define NUM_COLLECTIBLES 3
-#define NUM_AMMOS 3
-#define BULLET_LIFESPAN 2.0f 
-#define GROUND_LEVEL (SCREEN_HEIGHT - 50)
+#define JUMP_SPEED 600
+#define GRAVITY 680
+#define GROUND_LEVEL (1080 - 100)
 #define LEFT_BOUNDARY 0
+#define MAX_BULLETS 10
+#define MAX_HEALTH 3
 
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include "cimgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
 
+// Structure to hold save file information
+typedef struct {
+    char filename[256];
+    char displayName[64];  // Will hold formatted date/time
+} SaveFileInfo;
 
 typedef struct {
     float x, y;
@@ -32,15 +39,35 @@ typedef struct {
 } Platform;
 
 typedef struct {
-    float x, y;               // Position of the enemy
-    int width, height;        // Size of the enemy (one frame)
-    bool active;              // Whether the enemy is active
-    int currentFrame;         // Current animation frame
-    float speed;              // Movement speed of the enemy
-    SDL_Texture* texture;     // Texture for the sprite sheet
-    int frameWidth;           // Width of one frame in the sprite sheet
-    int frameHeight;          // Height of one frame in the sprite sheet
-    int totalFrames;          // Total number of frames in the sprite sheet
+    float x, y;
+    float velocityY;
+    bool onGround;
+    int health;
+    int ammo;
+    int score;
+    double time;
+    SDL_Texture* texture;
+    int currentFrame;
+    int frameWidth;          
+    int frameHeight;         
+    int totalFrames; 
+    float animationTimer;
+    float frameDelay;
+} Shooter;
+
+typedef struct {
+    float x, y;              
+    int width, height;       
+    bool active;   
+    int platformIndex;       
+    int currentFrame;        
+    float speed;             
+    SDL_Texture* texture;    
+    int frameWidth;          
+    int frameHeight;         
+    int totalFrames; 
+    float animationTimer;
+    float frameDelay;        
 } Enemy;
 
 typedef struct {
@@ -49,6 +76,7 @@ typedef struct {
     int width;
     int height;
     bool collected;
+    SDL_Texture* texture;
 } Collectible;
 
 typedef struct {
@@ -67,6 +95,7 @@ typedef struct {
 } HillNoise;
 
 typedef struct {
+    Shooter* shooters;
     float shooterX;
     float shooterY;
     float velocityY;
@@ -74,19 +103,31 @@ typedef struct {
     int health;
     int ammo;
     int score;
-    Platform platforms[NUM_PLATFORM];
-    Enemy enemies1[NUM_ENEMIES1];
-    Enemy enemies2[NUM_ENEMIES2];
-    Collectible collectibles[NUM_COLLECTIBLES];
-    Collectible ammos[NUM_AMMOS];
-    Bullet bullets[10];
+    Platform* platforms;
+    int numPlatforms;
+    Enemy* enemies1;
+    int numEnemies1;
+    Enemy* enemies2;
+    int numEnemies2;
+    Collectible* collectibles;
+    int numCollectibles;
+    Collectible* ammos;
+    int numAmmos;
+    Bullet bullets[100];
     float cameraX;
 
     float deltaTime;
     Uint32 lastTime;
     bool isPaused;
+    bool showSummaryWindow;
     bool quit;
     bool showDebugWindow;
+    bool isPlayer1Turn;
+    int currentPlayerIndex;
+
+    int player1Score;
+    int player1Health;
+    double player1Time;
 } GameData;
 
 extern GameData g;
@@ -94,7 +135,10 @@ extern GameData g;
 bool init();
 bool loadMedia();
 void clear();
-void initializeGame(GameData* state);
+void initializeGame(GameData* state, const char* levelFile, int screen_width, int screen_height);
+bool saveGame(GameData* state);
+void cleanupGameState(GameData* state);
+SaveFileInfo* getSaveFiles(int* count);
 
 extern SDL_Window* window;
 extern SDL_Renderer* renderer;
@@ -102,6 +146,9 @@ extern SDL_Texture* backgroundTexture;
 extern SDL_Texture* pauseTexture;
 extern SDL_Texture* enemy1SpriteSheet;
 extern SDL_Texture* enemy2SpriteSheet;
+extern SDL_Texture* bulletSpriteSheet;
+extern SDL_Texture* shooter1SpriteSheetIdle;
+extern SDL_Texture* shooter2SpriteSheetIdle;
 extern TTF_Font* font;
 
 #endif
