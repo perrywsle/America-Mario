@@ -92,7 +92,7 @@ void renderText(SDL_Renderer* renderer, TTF_Font* font, int screen_width) {
     SDL_Color textColor = {255, 255, 0, 255}; // Yellow for active player
 
     // Render turn indicator
-    SDL_Surface* turnSurface = TTF_RenderText_Solid(font, turnText, (SDL_Color){255, 255, 255, 255});
+    SDL_Surface* turnSurface = TTF_RenderText_Solid(font, turnText, (SDL_Color){0, 0, 0, 255});
     if (turnSurface) {
         SDL_Texture* turnTexture = SDL_CreateTextureFromSurface(renderer, turnSurface);
         SDL_Rect turnRect = {screen_width / 2 - turnSurface->w / 2, 10, turnSurface->w, turnSurface->h};
@@ -108,7 +108,7 @@ void renderText(SDL_Renderer* renderer, TTF_Font* font, int screen_width) {
         TTF_RenderText_Solid(font, timeText, textColor)
     };
 
-    int xOffset = currentPlayer * 400;
+    int xOffset = currentPlayer * 0;
     int yPositions[] = {40, 70, 100};
 
     for (int j = 0; j < 3; j++) {
@@ -125,10 +125,10 @@ void renderText(SDL_Renderer* renderer, TTF_Font* font, int screen_width) {
 void renderHearts(SDL_Renderer* renderer) {
     int currentPlayer = g.isPlayer1Turn ? 0 : 1;
 
-    SDL_Color heartColor = {255, 0, 0, 255}; // Bright red for active player
+    SDL_Color heartColor = {255, 0, 0, 255}; 
     SDL_SetRenderDrawColor(renderer, heartColor.r, heartColor.g, heartColor.b, heartColor.a);
 
-    int xOffset = currentPlayer * 400;
+    int xOffset = currentPlayer * 0;
     for (int i = 0; i < g.shooters[currentPlayer].health; i++) {
         SDL_Rect heartRect = {10 + xOffset + i * 60, 130, 50, 50};
         SDL_RenderFillRect(renderer, &heartRect);
@@ -138,6 +138,12 @@ void renderHearts(SDL_Renderer* renderer) {
 void drawShooter(SDL_Renderer* renderer) {
     Shooter* currentShooter = &g.shooters[g.isPlayer1Turn ? 0 : 1];
     SDL_Texture* currentTexture = g.isPlayer1Turn ? shooter1SpriteSheetIdle : shooter2SpriteSheetIdle;
+
+    currentShooter->animationTimer += g.deltaTime;
+    if (currentShooter->animationTimer >= currentShooter->frameDelay) {
+        currentShooter->currentFrame = (currentShooter->currentFrame + 1) % currentShooter->totalFrames;
+        currentShooter->animationTimer = 0;
+    }
 
     SDL_Rect srcRect;
     srcRect.x = currentShooter->currentFrame * currentShooter->frameWidth;
@@ -151,6 +157,7 @@ void drawShooter(SDL_Renderer* renderer) {
         100,
         100
     };
+    // destroy texture?
 
     SDL_RenderCopy(renderer, currentTexture, &srcRect, &dstRect);
 }

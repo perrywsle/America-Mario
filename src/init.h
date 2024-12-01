@@ -53,6 +53,8 @@ typedef struct {
     int totalFrames; 
     float animationTimer;
     float frameDelay;
+
+    bool dead;
 } Shooter;
 
 typedef struct {
@@ -71,10 +73,8 @@ typedef struct {
 } Enemy;
 
 typedef struct {
-    float x;
-    float y;
-    int width;
-    int height;
+    float x, y;
+    int width, height;
     bool collected;
     SDL_Texture* texture;
 } Collectible;
@@ -96,13 +96,6 @@ typedef struct {
 
 typedef struct {
     Shooter* shooters;
-    float shooterX;
-    float shooterY;
-    float velocityY;
-    bool onGround;
-    int health;
-    int ammo;
-    int score;
     Platform* platforms;
     int numPlatforms;
     Enemy* enemies1;
@@ -115,15 +108,14 @@ typedef struct {
     int numAmmos;
     Bullet bullets[100];
     float cameraX;
+    int ammo;
 
     float deltaTime;
     Uint32 lastTime;
     bool isPaused;
     bool showSummaryWindow;
     bool quit;
-    bool showDebugWindow;
     bool isPlayer1Turn;
-    int currentPlayerIndex;
 
     int player1Score;
     int player1Health;

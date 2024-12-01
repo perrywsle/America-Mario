@@ -14,7 +14,8 @@
       "totalFrames": 4,
       "animationTimer": 0.0,
       "frameDelay": 0.95,
-      "time": 0.0
+      "time": 0.0,
+      "dead": false
     },
     {
       "x": 0.0,
@@ -30,7 +31,8 @@
       "totalFrames": 6,
       "animationTimer": 0.0,
       "frameDelay": 0.95,
-      "time": 0.0
+      "time": 0.0,
+      "dead": false
     }
   ],
   "isPlayer1Turn": true,
@@ -59,8 +61,8 @@
     {
       "x": 250,
       "y": 350,
-      "width": 60,
-      "height": 60,
+      "width": 40,
+      "height": 40,
       "active": true,
       "currentFrame": 0,
       "speed": 200.0,
@@ -74,8 +76,8 @@
     {
       "x": 600,
       "y": 275,
-      "width": 60,
-      "height": 60,
+      "width": 40,
+      "height": 40,
       "active": true,
       "currentFrame": 0,
       "speed": 200.0,
@@ -89,8 +91,8 @@
     {
       "x": 950,
       "y": 200,
-      "width": 60,
-      "height": 60,
+      "width": 40,
+      "height": 40,
       "active": true,
       "currentFrame": 0,
       "speed": 200.0,
@@ -125,7 +127,7 @@
       "height": 60,
       "active": true,
       "currentFrame": 0,
-      "speed": 120.0,
+      "speed": 110.0,
       "sprite": "enemy2SpriteSheet", 
       "spriteWidth": 48,
       "spriteHeight": 32,
@@ -141,7 +143,7 @@
       "height": 60,
       "active": true,
       "currentFrame": 0,
-      "speed": 120.0,
+      "speed": 110.0,
       "sprite": "enemy2SpriteSheet",
       "spriteWidth": 48,
       "spriteHeight": 32,
@@ -157,7 +159,7 @@
       "height": 60,
       "active": true,
       "currentFrame": 0,
-      "speed": 120.0,
+      "speed": 110.0,
       "sprite": "enemy2SpriteSheet",
       "spriteWidth": 48,
       "spriteHeight": 32,

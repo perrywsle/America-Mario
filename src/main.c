@@ -163,6 +163,15 @@ int main(int argc, char* argv[]) {
                 igTextDisabled("No saved games found");
             }
 
+            igSpacing();
+            igSeparator();
+            igSpacing();
+
+            igSetCursorPosX(center_pos_x);
+            if (igButton("Exit", button_size)) {
+                g.quit = true;
+            }
+
             igEnd();
         }
 
@@ -170,20 +179,35 @@ int main(int argc, char* argv[]) {
 
         if (!g.isPaused && !showLevelSelection) {
             
-        if (g.isPlayer1Turn) {
-            updatePlayer(&g.shooters[0], leftPressed, rightPressed, spacePressed, screen_width, screen_height); 
-            g.shooters[0].time += g.deltaTime;
-            g.player1Score = g.shooters[0].score;
-            g.player1Health = g.shooters[0].health;
-            g.player1Time = g.shooters[0].time;
-        } else {
-            updatePlayer(&g.shooters[1], leftPressed, rightPressed, spacePressed, screen_width, screen_height);
-            g.shooters[1].time += g.deltaTime;
-        }
-
-
-        if (checkFinish(&g.shooters[g.isPlayer1Turn ? 0:1])) {
             if (g.isPlayer1Turn) {
+                updatePlayer(&g.shooters[0], leftPressed, rightPressed, spacePressed, screen_width, screen_height); 
+                g.shooters[0].time += g.deltaTime;
+                g.player1Score = g.shooters[0].score;
+                g.player1Health = g.shooters[0].health;
+                g.player1Time = g.shooters[0].time;
+            } else {
+                updatePlayer(&g.shooters[1], leftPressed, rightPressed, spacePressed, screen_width, screen_height);
+                g.shooters[1].time += g.deltaTime;
+            }
+
+            if (!g.shooters[0].dead && g.isPlayer1Turn)
+            {
+                if (checkFinish(&g.shooters[g.isPlayer1Turn ? 0:1])) {
+                    if (g.isPlayer1Turn) {
+                        cleanupGameState(&g);
+                        initializeGame(&g, levelFiles[selectedLevelIndex], screen_width, screen_height); 
+                        g.isPlayer1Turn = false;
+                        g.isPaused = true;
+                        g.shooters[0].score = g.player1Score;
+                        g.shooters[0].health = g.player1Health;
+                        g.shooters[0].time = g.player1Time;
+                    } else {
+                        g.showSummaryWindow = true;
+                        g.isPaused = true;
+                    }
+                }
+            } else if (g.shooters[0].dead && g.isPlayer1Turn)
+            {
                 cleanupGameState(&g);
                 initializeGame(&g, levelFiles[selectedLevelIndex], screen_width, screen_height); 
                 g.isPlayer1Turn = false;
@@ -191,11 +215,29 @@ int main(int argc, char* argv[]) {
                 g.shooters[0].score = g.player1Score;
                 g.shooters[0].health = g.player1Health;
                 g.shooters[0].time = g.player1Time;
-            } else {
+                g.shooters[0].dead = true;
+            } else if (!g.shooters[1].dead && g.isPlayer1Turn==false)
+            {
+                if (checkFinish(&g.shooters[g.isPlayer1Turn ? 0:1])) {
+                    if (g.isPlayer1Turn) {
+                        cleanupGameState(&g);
+                        initializeGame(&g, levelFiles[selectedLevelIndex], screen_width, screen_height); 
+                        g.isPlayer1Turn = false;
+                        g.isPaused = true;
+                        g.shooters[0].score = g.player1Score;
+                        g.shooters[0].health = g.player1Health;
+                        g.shooters[0].time = g.player1Time;
+                    } else {
+                        g.showSummaryWindow = true;
+                        g.isPaused = true;
+                    }
+                }
+            } else if (g.shooters[1].dead && g.isPlayer1Turn==false)
+            {
                 g.showSummaryWindow = true;
                 g.isPaused = true;
             }
-        }
+            
 
             if (g.shooters[g.isPlayer1Turn? 0 : 1].y >= GROUND_LEVEL) {
                 g.shooters[g.isPlayer1Turn? 0 : 1].y = GROUND_LEVEL;
@@ -206,8 +248,6 @@ int main(int argc, char* argv[]) {
             if (g.shooters[g.isPlayer1Turn? 0 : 1].x < LEFT_BOUNDARY) {
                 g.shooters[g.isPlayer1Turn? 0 : 1].x = LEFT_BOUNDARY; 
             }
-
-            
 
             render(renderer, backgroundTexture, pauseTexture, font, hn, screen_width, screen_height);
         }
@@ -259,8 +299,11 @@ int main(int argc, char* argv[]) {
             }
 
             igSetCursorPosX(center_pos_x);
-            if (igButton("Exit", button_size)) {
-                g.quit = true;
+            if (igButton("Exit to main menu", button_size)) {
+                showLevelSelection = true;
+                g.isPaused = false;
+                g.quit = false;
+                g.showSummaryWindow = false;
             }
 
             igEnd();
@@ -339,7 +382,7 @@ int main(int argc, char* argv[]) {
         igRender();
         ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
         SDL_GL_SwapWindow(window);
-        SDL_Delay(4);
+        SDL_Delay(1);
     }
 
     clear();

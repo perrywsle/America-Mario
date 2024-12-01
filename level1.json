@@ -13,8 +13,9 @@
       "spriteHeight": 32,
       "totalFrames": 4,
       "animationTimer": 0.0,
-      "frameDelay": 0.95,
-      "time": 0.0
+      "frameDelay": 1.0,
+      "time": 0.0,
+      "dead": false
     },
     {
       "x": 0.0,
@@ -28,9 +29,10 @@
       "spriteWidth": 32,
       "spriteHeight": 32,
       "totalFrames": 6,
-      "animationTimer": 0.0,
-      "frameDelay": 0.95,
-      "time": 0.0
+      "animationTimer": 1.0,
+      "frameDelay": 1.05,
+      "time": 0.0,
+      "dead": false
     }
   ],
   "isPlayer1Turn": true,
@@ -63,7 +65,7 @@
       "height": 60,
       "active": true,
       "currentFrame": 0,
-      "speed": 100.0,
+      "speed": 50.0,
       "sprite": "enemy1SpriteSheet", 
       "spriteWidth": 32,
       "spriteHeight": 32,
@@ -78,7 +80,7 @@
       "height": 60,
       "active": true,
       "currentFrame": 0,
-      "speed": 100.0,
+      "speed": 50.0,
       "sprite": "enemy1SpriteSheet",
       "spriteWidth": 32,
       "spriteHeight": 32,
@@ -93,7 +95,7 @@
       "height": 60,
       "active": true,
       "currentFrame": 0,
-      "speed": 100.0,
+      "speed": 50.0,
       "sprite": "enemy1SpriteSheet",
       "spriteWidth": 32,
       "spriteHeight": 32,
@@ -106,8 +108,8 @@
     {
       "x": 450,
       "y": 950,
-      "width": 60,
-      "height": 40,
+      "width": 70,
+      "height": 50,
       "active": true,
       "currentFrame": 0,
       "speed": 100.0,
@@ -122,8 +124,8 @@
     {
       "x": 900,
       "y": 350,
-      "width": 60,
-      "height": 40,
+      "width": 70,
+      "height": 50,
       "active": true,
       "currentFrame": 0,
       "speed": 100.0,
@@ -138,8 +140,8 @@
     {
       "x": 1300,
       "y": 750,
-      "width": 200,
-      "height": 200,
+      "width": 70,
+      "height": 50,
       "active": true,
       "currentFrame": 0,
       "speed": 100.0,

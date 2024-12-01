@@ -226,6 +226,7 @@ void initializeGame(GameData* state, const char* levelFile, int screen_width, in
         state->shooters[i].animationTimer = cJSON_GetObjectItem(shooterItem, "animationTimer")->valueint;
         state->shooters[i].frameDelay = cJSON_GetObjectItem(shooterItem, "frameDelay")->valueint;
         state->shooters[i].time = cJSON_GetObjectItem(shooterItem, "time")->valuedouble;
+        state->shooters[i].dead = cJSON_IsTrue(cJSON_GetObjectItem(shooterItem, "dead"));
     }
     printf("Shooters data loaded\n");
 
@@ -235,7 +236,6 @@ void initializeGame(GameData* state, const char* levelFile, int screen_width, in
     state->isPaused = false;
     state->showSummaryWindow = false;
     state->quit = false;
-    state->showDebugWindow = false;
     state->isPlayer1Turn = cJSON_IsTrue(cJSON_GetObjectItem(root, "isPlayer1Turn"));
     printf("Game data loaded\n");
 
@@ -376,6 +376,7 @@ bool saveGame(GameData* state) {
         cJSON_AddNumberToObject(shooter, "totalFrames", state->shooters[i].totalFrames);
         cJSON_AddNumberToObject(shooter, "animationTimer", 0.0);
         cJSON_AddNumberToObject(shooter, "frameDelay", 0.95);
+        cJSON_AddBoolToObject(shooter, "dead", state->shooters[i].dead);
         cJSON_AddItemToArray(shooters, shooter);
     }
     cJSON_AddItemToObject(root, "shooters", shooters);
@@ -560,7 +561,6 @@ void cleanupGameState(GameData* state) {
     state->numAmmos = 0;
     state->isPaused = false;
     state->showSummaryWindow = false;
-    state->showDebugWindow = false;
 
     state->cameraX = 0.0f;
 }

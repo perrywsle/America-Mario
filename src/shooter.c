@@ -224,8 +224,7 @@ void handleEnemyCollisions(Shooter* shooter) {
         if (checkEnemyCollision(shooter, &g.enemies1[i])) {
             shooter->health--;
             if (shooter->health <= 0) {
-                g.showSummaryWindow = true;
-                g.isPaused = true;
+                shooter->dead = true;
                 return;
             }
             shooter->x = 0.0f;
@@ -241,8 +240,7 @@ void handleEnemyCollisions(Shooter* shooter) {
         if (checkEnemyCollision(shooter, &g.enemies2[i])) {
             shooter->health--;
             if (shooter->health <= 0) {
-                g.isPaused = true;
-                g.isPlayer1Turn = false;
+                shooter->dead = true;
                 return;
             }
             shooter->x = 0.0f;
