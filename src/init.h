@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_image.h>
 #include <cjson/cJSON.h>
 #include <time.h>
 #include <sys/stat.h>
@@ -40,6 +41,7 @@ typedef struct {
 
 typedef struct {
     float x, y;
+    int width, height;
     float velocityY;
     bool onGround;
     int health;
@@ -53,7 +55,6 @@ typedef struct {
     int totalFrames; 
     float animationTimer;
     float frameDelay;
-
     bool dead;
 } Shooter;
 
@@ -121,9 +122,7 @@ typedef struct {
     int player1Score;
     int player1Health;
     double player1Time;
-} GameData;
 
-typedef struct {
     SDL_Window* window;
     SDL_Renderer* renderer;
     TTF_Font* font;
@@ -134,25 +133,12 @@ typedef struct {
     SDL_Texture* bulletSpriteSheet;
     SDL_Texture* shooter1SpriteSheetIdle;
     SDL_Texture* shooter2SpriteSheetIdle;
-} App;
+} GameData;
 
-bool init();
-bool loadMedia();
-void clear();
+bool init(GameData* g);
+bool loadMedia(GameData* g);
+void clear(GameData* g);
 void initializeGame(GameData* state, const char* levelFile, int screen_width, int screen_height);
-bool saveGame(GameData* state);
 void cleanupGameState(GameData* state);
-SaveFileInfo* getSaveFiles(int* count);
-
-extern SDL_Window* window;
-extern SDL_Renderer* renderer;
-extern SDL_Texture* backgroundTexture;
-extern SDL_Texture* pauseTexture;
-extern SDL_Texture* enemy1SpriteSheet;
-extern SDL_Texture* enemy2SpriteSheet;
-extern SDL_Texture* bulletSpriteSheet;
-extern SDL_Texture* shooter1SpriteSheetIdle;
-extern SDL_Texture* shooter2SpriteSheetIdle;
-extern TTF_Font* font;
 
 #endif

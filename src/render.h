@@ -4,7 +4,8 @@
 #include <SDL2/SDL.h>
 #include "shooter.h"
 
-void render(SDL_Renderer* renderer, 
+void render(GameData g,
+            SDL_Renderer* renderer, 
             SDL_Texture* textureBackground, 
             SDL_Texture* texturePause, 
             TTF_Font* font, 

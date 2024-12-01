@@ -7,16 +7,6 @@
 #define PI 3.14159265358979323846
 #define SQUARE_WIDTH 2
 
-HillNoise hn_instance = {
-    .sizes = NULL, 
-    .offsets = NULL,
-    .num_sizes = 0,
-    .sigma = 1.0f
-};
-
-// Reference to the global `hn`
-HillNoise* hn = &hn_instance;
-
 // Initialize Hill Noise
 void initHillNoise(HillNoise* hn, float* sizes, int num_sizes) {
     hn->sizes = sizes;
@@ -57,24 +47,24 @@ void freeHillNoise(HillNoise* hn) {
     free(hn->offsets);
 }
 
-void renderTerrains(SDL_Renderer* renderer, HillNoise* hn, float startX, SDL_Color color, float heightScale, int screen_height) {
+void renderTerrains(GameData g, SDL_Renderer* renderer, HillNoise* hn, float startX, SDL_Color color, float heightScale, int screen_height) {
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a); // Set terrain color
 
     for (float x = startX; x < WORLD_WIDTH; x += 1) {
         float yNoise = evaluateHillNoise(hn, 3*x); // Noise-based terrain generation
         float y = screen_height - (yNoise * heightScale); // Scale and adjust height
         
-        SDL_Rect filledArea = {
-            (int)(x * SQUARE_WIDTH - g.cameraX),  
-            (int)(y),        
-            SQUARE_WIDTH,                       
-            (int)(screen_height - y)            
-        };
+        SDL_Rect filledArea;
+        filledArea.x = (int)(x * SQUARE_WIDTH - g.cameraX);
+        filledArea.y = (int)(y);
+        filledArea.w = SQUARE_WIDTH;
+        filledArea.h = (int)(screen_height - y);
+
         SDL_RenderFillRect(renderer, &filledArea);
     }
 }
 
-void renderText(SDL_Renderer* renderer, TTF_Font* font, int screen_width) {
+void renderText(GameData g, SDL_Renderer* renderer, TTF_Font* font, int screen_width) {
     int currentPlayer = g.isPlayer1Turn ? 0 : 1;
 
     // Create text for current turn indicator
@@ -95,7 +85,13 @@ void renderText(SDL_Renderer* renderer, TTF_Font* font, int screen_width) {
     SDL_Surface* turnSurface = TTF_RenderText_Solid(font, turnText, (SDL_Color){0, 0, 0, 255});
     if (turnSurface) {
         SDL_Texture* turnTexture = SDL_CreateTextureFromSurface(renderer, turnSurface);
-        SDL_Rect turnRect = {screen_width / 2 - turnSurface->w / 2, 10, turnSurface->w, turnSurface->h};
+        
+        SDL_Rect turnRect;
+        turnRect.x = screen_width / 2 - turnSurface->w / 2;
+        turnRect.y = 10;
+        turnRect.w = turnSurface->w;
+        turnRect.h = turnSurface->h;
+
         SDL_RenderCopy(renderer, turnTexture, NULL, &turnRect);
         SDL_FreeSurface(turnSurface);
         SDL_DestroyTexture(turnTexture);
@@ -108,13 +104,12 @@ void renderText(SDL_Renderer* renderer, TTF_Font* font, int screen_width) {
         TTF_RenderText_Solid(font, timeText, textColor)
     };
 
-    int xOffset = currentPlayer * 0;
     int yPositions[] = {40, 70, 100};
 
     for (int j = 0; j < 3; j++) {
         if (surfaces[j]) {
             SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surfaces[j]);
-            SDL_Rect renderQuad = {10 + xOffset, yPositions[j], surfaces[j]->w, surfaces[j]->h};
+            SDL_Rect renderQuad = {10, yPositions[j], surfaces[j]->w, surfaces[j]->h};
             SDL_RenderCopy(renderer, texture, NULL, &renderQuad);
             SDL_FreeSurface(surfaces[j]);
             SDL_DestroyTexture(texture);
@@ -122,22 +117,26 @@ void renderText(SDL_Renderer* renderer, TTF_Font* font, int screen_width) {
     }
 }
 
-void renderHearts(SDL_Renderer* renderer) {
+void renderHearts(GameData g, SDL_Renderer* renderer) {
     int currentPlayer = g.isPlayer1Turn ? 0 : 1;
 
     SDL_Color heartColor = {255, 0, 0, 255}; 
     SDL_SetRenderDrawColor(renderer, heartColor.r, heartColor.g, heartColor.b, heartColor.a);
 
-    int xOffset = currentPlayer * 0;
     for (int i = 0; i < g.shooters[currentPlayer].health; i++) {
-        SDL_Rect heartRect = {10 + xOffset + i * 60, 130, 50, 50};
+        SDL_Rect heartRect;
+        heartRect.x = 10;
+        heartRect.y = 130;
+        heartRect.w = 50;
+        heartRect.h = 50;
+
         SDL_RenderFillRect(renderer, &heartRect);
     }
 }
 
-void drawShooter(SDL_Renderer* renderer) {
+void drawShooter(GameData g, SDL_Renderer* renderer) {
     Shooter* currentShooter = &g.shooters[g.isPlayer1Turn ? 0 : 1];
-    SDL_Texture* currentTexture = g.isPlayer1Turn ? shooter1SpriteSheetIdle : shooter2SpriteSheetIdle;
+    SDL_Texture* currentTexture = g.isPlayer1Turn ? g.shooter1SpriteSheetIdle : g.shooter2SpriteSheetIdle;
 
     currentShooter->animationTimer += g.deltaTime;
     if (currentShooter->animationTimer >= currentShooter->frameDelay) {
@@ -151,18 +150,16 @@ void drawShooter(SDL_Renderer* renderer) {
     srcRect.w = currentShooter->frameWidth;
     srcRect.h = currentShooter->frameHeight;
 
-    SDL_Rect dstRect = {
-        (int)(currentShooter->x - g.cameraX),
-        (int)(currentShooter->y),
-        100,
-        100
-    };
-    // destroy texture?
+    SDL_Rect dstRect;
+    dstRect.x = (int)(currentShooter->x - g.cameraX);
+    dstRect.y = (int)(currentShooter->y);
+    dstRect.w = currentShooter->width;
+    dstRect.h = currentShooter->height;
 
     SDL_RenderCopy(renderer, currentTexture, &srcRect, &dstRect);
 }
 
-void drawPlatforms(SDL_Renderer* renderer) {
+void drawPlatforms(GameData g, SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);  // Blue platforms
     for (int i = 0; i < g.numPlatforms; i++) {
         SDL_Rect platformRect = {
@@ -175,7 +172,7 @@ void drawPlatforms(SDL_Renderer* renderer) {
     }
 }
 
-void drawCollectibles(SDL_Renderer* renderer) {
+void drawCollectibles(GameData g, SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);  // Yellow collectibles
     for (int i = 0; i < g.numCollectibles; i++) {
         if (!g.collectibles[i].collected) {
@@ -190,7 +187,7 @@ void drawCollectibles(SDL_Renderer* renderer) {
     }
 }
 
-void drawEnemies1(SDL_Renderer* renderer) {
+void drawEnemies1(GameData g, SDL_Renderer* renderer) {
     for (int i = 0; i < g.numEnemies1; i++) {
         if (g.enemies1[i].active) {
             SDL_Rect srcRect;
@@ -210,7 +207,7 @@ void drawEnemies1(SDL_Renderer* renderer) {
     }
 }
 
-void drawEnemies2(SDL_Renderer* renderer) {
+void drawEnemies2(GameData g, SDL_Renderer* renderer) {
     for (int i = 0; i < g.numEnemies2; i++) {
         if (g.enemies2[i].active) {
             SDL_Rect srcRect;
@@ -230,7 +227,7 @@ void drawEnemies2(SDL_Renderer* renderer) {
     }
 }
 
-void drawBullets(SDL_Renderer* renderer) {
+void drawBullets(GameData g, SDL_Renderer* renderer) {
     static int currentFrame = 0;
     static float animationTimer = 0;  
     const float frameDelay = 0.1f;    
@@ -246,41 +243,39 @@ void drawBullets(SDL_Renderer* renderer) {
 
     for (int i = 0; i < g.ammo + 1; i++) {
         if (g.bullets[i].active) {
-            SDL_Rect srcRect = {
-                currentFrame * frameWidth, 
-                0,                         
-                frameWidth,                
-                16                         
-            }; 
+            SDL_Rect srcRect;
+            srcRect.x = currentFrame * frameWidth;
+            srcRect.y = 0;
+            srcRect.w = frameWidth;
+            srcRect.h = 16;
 
-            SDL_Rect dstRect = {
-                (int)(g.bullets[i].x - g.cameraX), 
-                (int)g.bullets[i].y, 
-                40,  // Display width
-                40   // Display height
-            };
+            SDL_Rect dstRect;
+            dstRect.x = (int)(g.bullets[i].x - g.cameraX);
+            dstRect.y = (int)g.bullets[i].y;
+            dstRect.w = 40;
+            dstRect.h = 40;
 
-            SDL_RenderCopy(renderer, bulletSpriteSheet, &srcRect, &dstRect);
+            SDL_RenderCopy(renderer, g.bulletSpriteSheet, &srcRect, &dstRect);
         }
     }
 }
 
-void drawAmmo(SDL_Renderer* renderer) {
+void drawAmmo(GameData g, SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 255, 200, 0, 255);  // Yellow collectibles
     for (int i = 0; i < g.numAmmos; i++) {
         if (!g.ammos[i].collected) {
-            SDL_Rect ammoRect = {
-                (int)(g.ammos[i].x - g.cameraX), 
-                (int)g.ammos[i].y, 
-                g.ammos[i].width, 
-                g.ammos[i].height
-            };
+            SDL_Rect ammoRect;
+            ammoRect.x = (int)(g.ammos[i].x - g.cameraX);
+            ammoRect.y = (int)g.ammos[i].y;
+            ammoRect.w = g.ammos[i].width;
+            ammoRect.h = g.ammos[i].height;
+
             SDL_RenderFillRect(renderer, &ammoRect);
         }
     }
 }
 
-void drawFinishFlag(SDL_Renderer* renderer, int screen_height) {
+void drawFinishFlag(GameData g, SDL_Renderer* renderer, int screen_height) {
     SDL_SetRenderDrawColor(renderer, 200, 200, 200, 200);
     SDL_Rect flagRect = {
         (int)(WORLD_WIDTH - g.cameraX),
@@ -291,7 +286,8 @@ void drawFinishFlag(SDL_Renderer* renderer, int screen_height) {
     SDL_RenderFillRect(renderer, &flagRect);
 }
 
-void render(SDL_Renderer* renderer, 
+void render(GameData g,
+            SDL_Renderer* renderer, 
             SDL_Texture* textureBackground, 
             SDL_Texture* texturePause, 
             TTF_Font* font, 
@@ -310,22 +306,22 @@ void render(SDL_Renderer* renderer,
     SDL_RenderCopy(renderer, texturePause, NULL, &pauseButtonRect);
 
     // Render generated terrain
-    renderTerrains(renderer, hn, 0, (SDL_Color){34, 139, 34, 255}, 500, screen_height);
-    renderTerrains(renderer, hn, 0, (SDL_Color){144, 238, 144, 255}, 300, screen_height);
+    renderTerrains(g, renderer, hn, 0, (SDL_Color){34, 139, 34, 255}, 500, screen_height);
+    renderTerrains(g, renderer, hn, 0, (SDL_Color){144, 238, 144, 255}, 300, screen_height);
 
     // Draw game elements
-    drawPlatforms(renderer);
-    drawCollectibles(renderer);
-    drawAmmo(renderer);
-    drawEnemies1(renderer);
-    drawEnemies2(renderer);
-    drawShooter(renderer);
-    drawBullets(renderer);
-    drawFinishFlag(renderer, screen_height);
+    drawPlatforms(g, renderer);
+    drawCollectibles(g, renderer);
+    drawAmmo(g, renderer);
+    drawEnemies1(g, renderer);
+    drawEnemies2(g, renderer);
+    drawShooter(g, renderer);
+    drawBullets(g, renderer);
+    drawFinishFlag(g, renderer, screen_height);
 
     // Render UI elements
-    renderText(renderer, font, screen_width);
-    renderHearts(renderer);
+    renderText(g, renderer, font, screen_width);
+    renderHearts(g, renderer);
 
     // Present the rendered frame
     SDL_RenderPresent(renderer);

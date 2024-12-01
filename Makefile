@@ -38,6 +38,7 @@ OBJS_GL3W = \
 	    imgui_impl_sdl.o \
 	    imgui_impl_opengl3.o \
 		init.o \
+		gui.o \
 		render.o \
 		shooter.o \
 	    main.o \
@@ -50,8 +51,8 @@ all: $(OBJS_GL3W) $(OBJS_GLEW)
 
 gl3w: $(OBJS_GL3W)
 
-main: main.o gl3w.o imgui_impl_sdl.o imgui_impl_opengl3.o cimgui $(SRCDIR)/init.o $(SRCDIR)/shooter.o $(SRCDIR)/render.o
-	gcc $(SRCDIR)/main.o $(SRCDIR)/init.o $(SRCDIR)/shooter.o $(SRCDIR)/render.o $(IMGUI_IMPL_DIR)/imgui_impl_sdl.o $(IMGUI_IMPL_DIR)/imgui_impl_opengl3.o $(GL3W_DIR)/src/gl3w.o -o $(OUT_GL3W) $(LFLAGS)
+main: main.o gl3w.o imgui_impl_sdl.o imgui_impl_opengl3.o cimgui $(SRCDIR)/init.o $(SRCDIR)/gui.o $(SRCDIR)/shooter.o $(SRCDIR)/render.o
+	gcc $(SRCDIR)/main.o $(SRCDIR)/init.o $(SRCDIR)/gui.o $(SRCDIR)/shooter.o $(SRCDIR)/render.o $(IMGUI_IMPL_DIR)/imgui_impl_sdl.o $(IMGUI_IMPL_DIR)/imgui_impl_opengl3.o $(GL3W_DIR)/src/gl3w.o -o $(OUT_GL3W) $(LFLAGS)
 
 imgui_impl_sdl.o: $(IMGUI_IMPL_DIR)/imgui_impl_sdl.cpp $(IMGUI_IMPL_DIR)/imgui_impl_sdl.h
 	g++ $(SDL_IMPL_CFLAGS) -c $< -o $(IMGUI_IMPL_DIR)/$@
@@ -64,6 +65,9 @@ gl3w.o: gl3w/src/gl3w.c gl3w/include/GL/gl3w.h gl3w/include/GL/glcorearb.h
 	gcc $(CFLAGS) -c $< -o gl3w/src/$@
 
 init.o: $(SRCDIR)/init.c $(SRCDIR)/init.h
+	gcc $(CFLAGS) -c $< -o $(SRCDIR)/$@
+
+gui.o: $(SRCDIR)/gui.c $(SRCDIR)/gui.h
 	gcc $(CFLAGS) -c $< -o $(SRCDIR)/$@
 
 shooter.o: $(SRCDIR)/shooter.c $(SRCDIR)/shooter.h
