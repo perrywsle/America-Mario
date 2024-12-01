@@ -1,4 +1,4 @@
-CC := gcc
+CC := gcc gdb
 INCLDIR := externals/cimgui
 SRCDIR := src
 SDL2_INCLDIR := /usr/local/include/SDL2

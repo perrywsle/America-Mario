@@ -114,6 +114,7 @@ typedef struct {
     Uint32 lastTime;
     bool isPaused;
     bool showSummaryWindow;
+    bool showLevelSelection;
     bool quit;
     bool isPlayer1Turn;
 
@@ -122,7 +123,18 @@ typedef struct {
     double player1Time;
 } GameData;
 
-extern GameData g;
+typedef struct {
+    SDL_Window* window;
+    SDL_Renderer* renderer;
+    TTF_Font* font;
+    SDL_Texture* backgroundTexture;
+    SDL_Texture* pauseTexture;
+    SDL_Texture* enemy1SpriteSheet;
+    SDL_Texture* enemy2SpriteSheet;
+    SDL_Texture* bulletSpriteSheet;
+    SDL_Texture* shooter1SpriteSheetIdle;
+    SDL_Texture* shooter2SpriteSheetIdle;
+} App;
 
 bool init();
 bool loadMedia();

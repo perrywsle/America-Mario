@@ -25,6 +25,8 @@ SDL_Texture* shooter2SpriteSheetIdle = NULL;
 
 SDL_Surface* imgPause = NULL;
 
+GameData g;
+
 bool init() {
     bool success = true;
     
@@ -235,6 +237,7 @@ void initializeGame(GameData* state, const char* levelFile, int screen_width, in
     state->lastTime = SDL_GetTicks();
     state->isPaused = false;
     state->showSummaryWindow = false;
+    state->showLevelSelection = true;
     state->quit = false;
     state->isPlayer1Turn = cJSON_IsTrue(cJSON_GetObjectItem(root, "isPlayer1Turn"));
     printf("Game data loaded\n");
