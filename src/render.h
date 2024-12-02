@@ -2,7 +2,7 @@
 #define RENDER_H
 
 #include <SDL2/SDL.h>
-#include "shooter.h"
+#include "init.h"
 
 void render(GameData g,
             SDL_Renderer* renderer, 

@@ -41,6 +41,11 @@ typedef struct {
 
 typedef struct {
     float x, y;
+    float width, height;
+} PauseButton;
+
+typedef struct {
+    float x, y;
     int width, height;
     float velocityY;
     bool onGround;
@@ -77,7 +82,6 @@ typedef struct {
     float x, y;
     int width, height;
     bool collected;
-    SDL_Texture* texture;
 } Collectible;
 
 typedef struct {
@@ -111,6 +115,8 @@ typedef struct {
     float cameraX;
     int ammo;
 
+    PauseButton* pauseButton;
+
     float deltaTime;
     Uint32 lastTime;
     bool isPaused;
@@ -118,10 +124,6 @@ typedef struct {
     bool showLevelSelection;
     bool quit;
     bool isPlayer1Turn;
-
-    int player1Score;
-    int player1Health;
-    double player1Time;
 
     SDL_Window* window;
     SDL_Renderer* renderer;

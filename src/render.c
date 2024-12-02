@@ -1,5 +1,4 @@
 #include "render.h"
-#include "shooter.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,6 +44,11 @@ float evaluateHillNoise(HillNoise* hn, float x) {
 // Free memory for HillNoise
 void freeHillNoise(HillNoise* hn) {
     free(hn->offsets);
+}
+
+void renderBackground(GameData g, SDL_Renderer* renderer, SDL_Texture* textureBackground, int screen_width, int screen_height) {
+    SDL_Rect bgRect = {(int)(g.cameraX), 0, screen_width, screen_height};
+    SDL_RenderCopy(renderer, textureBackground, &bgRect, NULL);
 }
 
 void renderTerrains(GameData g, SDL_Renderer* renderer, HillNoise* hn, float startX, SDL_Color color, float heightScale, int screen_height) {
@@ -122,10 +126,11 @@ void renderHearts(GameData g, SDL_Renderer* renderer) {
 
     SDL_Color heartColor = {255, 0, 0, 255}; 
     SDL_SetRenderDrawColor(renderer, heartColor.r, heartColor.g, heartColor.b, heartColor.a);
+    int offSet = 60;
 
     for (int i = 0; i < g.shooters[currentPlayer].health; i++) {
         SDL_Rect heartRect;
-        heartRect.x = 10;
+        heartRect.x = 10 + offSet*i;
         heartRect.y = 130;
         heartRect.w = 50;
         heartRect.h = 50;
@@ -286,6 +291,11 @@ void drawFinishFlag(GameData g, SDL_Renderer* renderer, int screen_height) {
     SDL_RenderFillRect(renderer, &flagRect);
 }
 
+void drawPauseButton(GameData g, SDL_Renderer* renderer, SDL_Texture* texturePause) {
+    SDL_Rect pauseButtonRect = {1820, 50, 100, 100};
+    SDL_RenderCopy(renderer, texturePause, NULL, &pauseButtonRect);
+}
+
 void render(GameData g,
             SDL_Renderer* renderer, 
             SDL_Texture* textureBackground, 
@@ -298,16 +308,14 @@ void render(GameData g,
     SDL_RenderClear(renderer);
 
     // Render background
-    SDL_Rect bgRect = {(int)(g.cameraX), 0, screen_width, screen_height};
-    SDL_RenderCopy(renderer, textureBackground, &bgRect, NULL);
-
-    // Render pause button
-    SDL_Rect pauseButtonRect = {1820, 50, 100, 100};
-    SDL_RenderCopy(renderer, texturePause, NULL, &pauseButtonRect);
+    renderBackground(g, renderer, textureBackground, screen_width, screen_height);
 
     // Render generated terrain
     renderTerrains(g, renderer, hn, 0, (SDL_Color){34, 139, 34, 255}, 500, screen_height);
     renderTerrains(g, renderer, hn, 0, (SDL_Color){144, 238, 144, 255}, 300, screen_height);
+
+    // Render pause button
+    drawPauseButton(g, renderer, texturePause);
 
     // Draw game elements
     drawPlatforms(g, renderer);

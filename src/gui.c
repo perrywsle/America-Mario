@@ -49,7 +49,7 @@ void loadMainMenu(GameData* g, int screen_width, int screen_height, char** level
     igSpacing();
 
     int saveCount;
-    SaveFileInfo* saves = getSaveFiles(&saveCount);
+    SaveFileInfo* saves = loadSaveFiles(&saveCount);
     if (saves) {
         ImVec2 save_button_size = {320.0f, 30.0f};
         float save_center_pos_x = (window_width - save_button_size.x) * 0.5f;
@@ -145,9 +145,9 @@ void loadSummary(GameData* g, int screen_width, int screen_height, char** levelF
                                             ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoTitleBar;
 
     ImVec2 center = {screen_width * 0.5f, screen_height * 0.5f};
-    ImVec2 window_size = {600.0f, 300.0f};
+    ImVec2 window_size = {300.0f, 300.0f};
     ImVec2 window_pos = {center.x, center.y - window_size.y * 0.5f};
-    ImVec2 button_size = {160.0f, 30.0f};
+    ImVec2 button_size = {150.0f, 30.0f};
     float window_width = igGetWindowWidth();
     float center_pos_x = (window_width - button_size.x) * 0.5f;
 
@@ -198,8 +198,11 @@ void loadSummary(GameData* g, int screen_width, int screen_height, char** levelF
     }
 
     igSetCursorPosX(center_pos_x);
-    if (igButton("Exit", button_size)) {
-        g->quit = true;
+    if (igButton("Exit to main menu", button_size)) {
+        g->showLevelSelection = true;
+        g->isPaused = false;
+        g->quit = false;
+        g->showSummaryWindow = false;
     }
 
     igEnd();
@@ -394,7 +397,7 @@ bool saveGame(GameData* state) {
     return true;
 }
 
-SaveFileInfo* getSaveFiles(int* count) {
+SaveFileInfo* loadSaveFiles(int* count) {
     DIR* dir;
     struct dirent* ent;
     *count = 0;
@@ -441,4 +444,11 @@ SaveFileInfo* getSaveFiles(int* count) {
     closedir(dir);
     
     return saves;
+}
+
+void freeLevelFiles(char** levelFiles, int levelCount){
+    for (int i = 0; i < levelCount; i++) {
+        free(levelFiles[i]);
+    }
+    free(levelFiles);
 }

@@ -2,10 +2,9 @@
 #define SHOOTER_H
 
 #include <stdbool.h>
-#include "init.h"
+#include "render.h"
 
 void shootBullet(GameData* g, float targetX, float targetY);
-bool checkFinish(GameData* g);
-void updatePlayer(GameData* g, Shooter* shooter, bool leftPressed, bool rightPressed, bool spacePressed, int screen_width, int screen_height);
+void updateGame(GameData* g, HillNoise* hn, int screen_width, int screen_height, char** levelFiles, int selectedLevelIndex, bool leftPressed, bool rightPressed, bool spacePressed);
 
 #endif

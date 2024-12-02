@@ -144,6 +144,9 @@ void updateShooterPosition(GameData* g, bool leftPressed, bool rightPressed, boo
     } else if (!collisionDetected && shooter->y < GROUND_LEVEL) {
         shooter->onGround = false;
     }
+    if (shooter->x < LEFT_BOUNDARY) {
+        shooter->x = LEFT_BOUNDARY; 
+    }
 }
 
 void updateCollectibles(GameData* g) {
@@ -348,4 +351,44 @@ void updatePlayer(GameData* g, Shooter* shooter, bool leftPressed, bool rightPre
     }
     updateBullets(g, screen_width, screen_height);
     handleBulletEnemyCollisions(g);
+}
+
+
+void updateGame(GameData* g, HillNoise* hn, int screen_width, int screen_height, char** levelFiles, int selectedLevelIndex, bool leftPressed, bool rightPressed, bool spacePressed) {
+    static int player1Score, player1Health;
+    static double player1Time;
+
+    int currentPlayerIndex = g->isPlayer1Turn ? 0 : 1;
+    Shooter* currentShooter = &g->shooters[currentPlayerIndex];
+
+    // Update the current player's state
+    updatePlayer(g, currentShooter, leftPressed, rightPressed, spacePressed, screen_width, screen_height);
+    currentShooter->time += g->deltaTime;
+
+    // Store Player 1's state when it is Player 1's turn
+    if (g->isPlayer1Turn) {
+        player1Score = currentShooter->score;
+        player1Health = currentShooter->health;
+        player1Time = currentShooter->time;
+    }
+
+    // Handle game completion or player death
+    if (currentShooter->dead || checkFinish(g)) {
+        if (g->isPlayer1Turn) {
+            cleanupGameState(g);
+            initializeGame(g, levelFiles[selectedLevelIndex], screen_width, screen_height);
+            g->isPlayer1Turn = !g->isPlayer1Turn;
+            g->isPaused = true;
+            g->shooters[0].score = player1Score;
+            g->shooters[0].health = player1Health;
+            g->shooters[0].time = player1Time;
+            if (currentShooter->dead) currentShooter->dead = true;
+        } else {
+            g->showSummaryWindow = true;
+            g->isPaused = true;
+        }
+    }
+
+    // Render the game state
+    render(*g, g->renderer, g->backgroundTexture, g->pauseTexture, g->font, hn, screen_width, screen_height);
 }

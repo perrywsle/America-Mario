@@ -4,82 +4,6 @@
 #include "render.h"
 #include "shooter.h"
 
-void updateGame(GameData* g, HillNoise* hn, int screen_width, int screen_height, char** levelFiles, int selectedLevelIndex, bool leftPressed, bool rightPressed, bool spacePressed){
-    int currentPlayerIndex = g->isPlayer1Turn ? 0:1;
-    if (g->isPlayer1Turn) {
-                updatePlayer(g, &g->shooters[0], leftPressed, rightPressed, spacePressed, screen_width, screen_height); 
-                g->shooters[0].time += g->deltaTime;
-                g->player1Score = g->shooters[0].score;
-                g->player1Health = g->shooters[0].health;
-                g->player1Time = g->shooters[0].time;
-                printf("Player 1 score: %d", g->shooters[0].score);
-            } else {
-                updatePlayer(g, &g->shooters[1], leftPressed, rightPressed, spacePressed, screen_width, screen_height);
-                g->shooters[1].time += g->deltaTime;
-            }
-
-            if (!g->shooters[0].dead && g->isPlayer1Turn)
-            {
-                if (checkFinish(g)) {
-                    if (g->isPlayer1Turn) {
-                        cleanupGameState(g);
-                        initializeGame(g, levelFiles[selectedLevelIndex], screen_width, screen_height); 
-                        g->isPlayer1Turn = false;
-                        g->isPaused = true;
-                        g->shooters[0].score = g->player1Score;
-                        g->shooters[0].health = g->player1Health;
-                        g->shooters[0].time = g->player1Time;
-                    } else {
-                        g->showSummaryWindow = true;
-                        g->isPaused = true;
-                    }
-                }
-            } else if (g->shooters[0].dead && g->isPlayer1Turn)
-            {
-                cleanupGameState(g);
-                initializeGame(g, levelFiles[selectedLevelIndex], screen_width, screen_height); 
-                g->isPlayer1Turn = false;
-                g->isPaused = true;
-                g->shooters[0].score = g->player1Score;
-                g->shooters[0].health = g->player1Health;
-                g->shooters[0].time = g->player1Time;
-                g->shooters[0].dead = true;
-            } else if (!g->shooters[1].dead && g->isPlayer1Turn==false)
-            {
-                if (checkFinish(g)) {
-                    if (g->isPlayer1Turn) {
-                        cleanupGameState(g);
-                        initializeGame(g, levelFiles[selectedLevelIndex], screen_width, screen_height); 
-                        g->isPlayer1Turn = false;
-                        g->isPaused = true;
-                        g->shooters[0].score = g->player1Score;
-                        g->shooters[0].health = g->player1Health;
-                        g->shooters[0].time = g->player1Time;
-                    } else {
-                        g->showSummaryWindow = true;
-                        g->isPaused = true;
-                    }
-                }
-            } else if (g->shooters[1].dead && g->isPlayer1Turn==false)
-            {
-                g->showSummaryWindow = true;
-                g->isPaused = true;
-            }
-            
-
-            if (g->shooters[currentPlayerIndex].y >= GROUND_LEVEL) {
-                g->shooters[currentPlayerIndex].y = GROUND_LEVEL;
-                g->shooters[currentPlayerIndex].velocityY = 0;
-                g->shooters[currentPlayerIndex].onGround = true;
-            }
-
-            if (g->shooters[currentPlayerIndex].x < LEFT_BOUNDARY) {
-                g->shooters[currentPlayerIndex].x = LEFT_BOUNDARY; 
-            }
-
-            render(*g, g->renderer, g->backgroundTexture, g->pauseTexture, g->font, hn, screen_width, screen_height);
-}
-
 int main(int argc, char* argv[]) {
     GameData g;
     HillNoise hn_instance = {
@@ -119,6 +43,14 @@ int main(int argc, char* argv[]) {
 
     g.showLevelSelection = true;
 
+    PauseButton pauseButton_instance = {
+        .x = 1820,
+        .y = 50,
+        .width = 100.0f,
+        .height = 100.0f
+    };
+    g.pauseButton = &pauseButton_instance;
+
     bool leftPressed = false;
     bool rightPressed = false;
     bool spacePressed = false;
@@ -138,7 +70,7 @@ int main(int argc, char* argv[]) {
             if (e.type == SDL_MOUSEBUTTONDOWN) {
                 if (e.button.button == SDL_BUTTON_LEFT) {
                     SDL_GetMouseState(&mouseX, &mouseY);
-                    if (mouseX >= 1820 && mouseX <= 1920 && mouseY >= 50 && mouseY <= 150) {
+                    if (mouseX >= g.pauseButton->x && mouseX <= g.pauseButton->x + g.pauseButton->width && mouseY >= g.pauseButton->y && mouseY <= g.pauseButton->y + g.pauseButton->height) {
                         g.isPaused = !g.isPaused;
                     } else if (!g.isPaused && !igGetIO()->WantCaptureMouse) {
                         shootBullet(&g, mouseX, mouseY);
@@ -205,10 +137,7 @@ int main(int argc, char* argv[]) {
 
     clear(&g);
     freeHillNoise(hn);
-    for (int i = 0; i < levelCount; i++) {
-        free(levelFiles[i]);
-    }
-    free(levelFiles);
+    freeLevelFiles(levelFiles, levelCount);
     TTF_CloseFont(g.font);
     TTF_Quit();
     SDL_Quit();

@@ -9,6 +9,7 @@ void loadPause(GameData* g, int screen_width, int screen_height, char** levelFil
 void loadSummary(GameData* g, int screen_width, int screen_height, char** levelFiles, int* selectedLevelIndex);
 int loadLevelFiles(const char* folderPath, char*** levelFiles);
 bool saveGame(GameData* state);
-SaveFileInfo* getSaveFiles(int* count);
+SaveFileInfo* loadSaveFiles(int* count);
+void freeLevelFiles(char** levelFiles, int levelCount);
 
 #endif
