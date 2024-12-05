@@ -1,42 +1,54 @@
 #include <gui.h>
 
-void loadMainMenu(GameData* g, int screen_width, int screen_height, char** levelFiles, int levelCount, int* selectedLevelIndex){
+void loadMainMenu(GameData* g, int screen_width, int screen_height) {
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
-                                ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar |
-                                ImGuiWindowFlags_NoScrollWithMouse;
+                                    ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar |
+                                    ImGuiWindowFlags_NoScrollWithMouse;
 
+    float base_height = 100.0f; // Base height for title, spacing, and buttons
+    float button_height = 30.0f;
+    float spacing = igGetStyle()->ItemSpacing.y;
+    float total_height = base_height + (g->levelCount + 1) * (button_height + spacing); // Levels
+
+    int saveCount;
+    SaveFileInfo* saves = loadSaveFiles(&saveCount);
+    if (saveCount > 0) {
+        total_height += saveCount * 2 * (button_height + spacing); // Save files
+    } else {
+        total_height += button_height + spacing; // "No saved games found"
+    }
+
+    ImVec2 window_size = {400.0f, total_height}; 
     ImVec2 center = {screen_width * 0.5f, screen_height * 0.5f};
-    ImVec2 window_size = {400.0f, 300.0f}; // Increased size for save files
     ImVec2 window_pos = {center.x, center.y - window_size.y * 0.5f};
 
     igSetNextWindowPos(window_pos, ImGuiCond_Always, (ImVec2){0.5f, 0.5f});
     igSetNextWindowSize(window_size, ImGuiCond_Always);
-
     igBegin("Main Menu", NULL, window_flags);
 
+    // Title
     float window_width = igGetWindowWidth();
-    ImVec2 button_size = {160.0f, 30.0f};
+    ImVec2 button_size = {160.0f, button_height};
     float center_pos_x = (window_width - button_size.x) * 0.5f;
 
-    // Title
     ImVec2 title_size;
-    igCalcTextSize(&title_size, "Select Level or Continue", NULL, false, -1.0f);
+    igCalcTextSize(&title_size, "Select Level or Continue", NULL, false, -1.0f); 
     igSetCursorPosX((window_width - title_size.x) * 0.5f);
     igText("Select Level or Continue");
+
     igSpacing();
 
-    // New Game section
+    // New Game Section
     igText("New Game:");
     igSpacing();
-    for (int i = 0; i < levelCount; i++) {
+    for (int i = 0; i < g->levelCount; i++) {
         igSetCursorPosX(center_pos_x);
         char buttonLabel[32];
         snprintf(buttonLabel, sizeof(buttonLabel), "Level %d", i + 1);
         if (igButton(buttonLabel, button_size)) {
-            *selectedLevelIndex = i;
-            initializeGame(g, levelFiles[*selectedLevelIndex], screen_width, screen_height);
+            g->selectedLevelIndex = i;
+            initializeGame(g, g->levelFiles[g->selectedLevelIndex], screen_width, screen_height);
             g->showLevelSelection = false;
-            break;
         }
     }
 
@@ -44,22 +56,16 @@ void loadMainMenu(GameData* g, int screen_width, int screen_height, char** level
     igSeparator();
     igSpacing();
 
-    // Load Game section
+    // Load Game Section
     igText("Continue Saved Game:");
     igSpacing();
-
-    int saveCount;
-    SaveFileInfo* saves = loadSaveFiles(&saveCount);
-    if (saves) {
-        ImVec2 save_button_size = {320.0f, 30.0f};
-        float save_center_pos_x = (window_width - save_button_size.x) * 0.5f;
-        
+    if (saveCount > 0) {
+        ImVec2 save_button_size = {320.0f, button_height};
         for (int i = 0; i < saveCount; i++) {
-            igSetCursorPosX(save_center_pos_x);
+            igSetCursorPosX((window_width - save_button_size.x) * 0.5f);
             if (igButton(saves[i].displayName, save_button_size)) {
                 initializeGame(g, saves[i].filename, screen_width, screen_height);
                 g->showLevelSelection = false;
-                break;
             }
         }
         free(saves);
@@ -71,7 +77,7 @@ void loadMainMenu(GameData* g, int screen_width, int screen_height, char** level
     igSpacing();
     igSeparator();
     igSpacing();
-
+    
     igSetCursorPosX(center_pos_x);
     if (igButton("Exit", button_size)) {
         g->quit = true;
@@ -80,13 +86,13 @@ void loadMainMenu(GameData* g, int screen_width, int screen_height, char** level
     igEnd();
 }
 
-void loadPause(GameData* g, int screen_width, int screen_height, char** levelFiles, int selectedLevelIndex){
+void loadPause(GameData* g, int screen_width, int screen_height){
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
                                             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar |
                                             ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoTitleBar;
 
     ImVec2 center = {screen_width * 0.5f, screen_height * 0.5f};
-    ImVec2 window_size = {200.0f, 160.0f}; // Increased height for new button
+    ImVec2 window_size = {200.0f, 160.0f}; 
     ImVec2 window_pos = {center.x, center.y - window_size.y * 0.5f};
 
     igSetNextWindowPos(window_pos, ImGuiCond_Always, (ImVec2){0.5f, 0.5f});
@@ -100,6 +106,7 @@ void loadPause(GameData* g, int screen_width, int screen_height, char** levelFil
     ImVec2 button_size = {160.0f, 30.0f};
     float center_pos_x = (window_width - button_size.x) * 0.5f;
 
+    // Buttons options
     igSetCursorPosX(center_pos_x);
     if (igButton("Resume", button_size)) {
         g->isPaused = false;
@@ -108,7 +115,7 @@ void loadPause(GameData* g, int screen_width, int screen_height, char** levelFil
 
     igSetCursorPosX(center_pos_x);
     if (igButton("Restart", button_size)) {
-        initializeGame(g, levelFiles[selectedLevelIndex], screen_width, screen_height);
+        initializeGame(g, g->levelFiles[g->selectedLevelIndex], screen_width, screen_height);
         g->isPaused = false;
         SDL_Delay(100);
     }
@@ -127,7 +134,7 @@ void loadPause(GameData* g, int screen_width, int screen_height, char** levelFil
     }
 
     igSetCursorPosX(center_pos_x);
-    if (igButton("Exit to main menu", button_size)) {
+    if (igButton("Exit to Main Menu", button_size)) {
         g->showLevelSelection = true;
         g->isPaused = false;
         g->quit = false;
@@ -139,7 +146,7 @@ void loadPause(GameData* g, int screen_width, int screen_height, char** levelFil
     igPopStyleColor(1);
 }
 
-void loadSummary(GameData* g, int screen_width, int screen_height, char** levelFiles, int* selectedLevelIndex){
+void loadSummary(GameData* g, int screen_width, int screen_height){
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
                                             ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar |
                                             ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoTitleBar;
@@ -149,7 +156,7 @@ void loadSummary(GameData* g, int screen_width, int screen_height, char** levelF
     ImVec2 window_pos = {center.x, center.y - window_size.y * 0.5f};
     ImVec2 button_size = {150.0f, 30.0f};
     float window_width = igGetWindowWidth();
-    float center_pos_x = (window_width - button_size.x) * 0.5f;
+    float center_pos_x = (window_width - window_size.x) * 0.5f;
 
     igSetNextWindowPos(window_pos, ImGuiCond_Always, (ImVec2){0.5f, 0.5f});
     igSetNextWindowSize(window_size, ImGuiCond_Always);
@@ -163,6 +170,8 @@ void loadSummary(GameData* g, int screen_width, int screen_height, char** levelF
     igText("Player 2: Score: %d,\n Time: %.2fs,\n Health: %d\n", g->shooters[1].score, g->shooters[1].time, g->shooters[1].health);
     
     igSetCursorPosX(center_pos_x);
+    // Conditions of winner
+    // Whoever dies will lose
     if (g->shooters[0].health == 0 && g->shooters[1].health > 0) {
         igText("Player 2 wins!");
     } else if (g->shooters[1].health == 0 && g->shooters[0].health > 0) {
@@ -185,6 +194,7 @@ void loadSummary(GameData* g, int screen_width, int screen_height, char** levelF
             }
         }
     } else {
+        // Both died
         igText("Tie!!");
     }
 
@@ -192,9 +202,9 @@ void loadSummary(GameData* g, int screen_width, int screen_height, char** levelF
     igSetCursorPosX(center_pos_x);
     if (igButton("Next Level", button_size)) {
         g->showSummaryWindow = false;
-        *selectedLevelIndex += 1;
+        g->selectedLevelIndex += 1;
         cleanupGameState(g);
-        initializeGame(g, levelFiles[*selectedLevelIndex], screen_width, screen_height);
+        initializeGame(g, g->levelFiles[g->selectedLevelIndex], screen_width, screen_height);
     }
 
     igSetCursorPosX(center_pos_x);
@@ -211,7 +221,7 @@ void loadSummary(GameData* g, int screen_width, int screen_height, char** levelF
 }
 
 int loadLevelFiles(const char* folderPath, char*** levelFiles) {
-    struct dirent* entry;
+    struct dirent* ent; // directory entries
     DIR* dir = opendir(folderPath);
 
     if (!dir) {
@@ -223,9 +233,10 @@ int loadLevelFiles(const char* folderPath, char*** levelFiles) {
     size_t capacity = 10; // Initial capacity for the array
     *levelFiles = malloc(capacity * sizeof(char*));
 
-    while ((entry = readdir(dir)) != NULL) {
+    // read each entry until NULL
+    while ((ent = readdir(dir)) != NULL) {
         // Check for ".json" files
-        if (strstr(entry->d_name, ".json")) {
+        if (strstr(ent->d_name, ".json")) {
             // Ensure capacity is sufficient
             if (count >= capacity) {
                 capacity *= 2;
@@ -233,9 +244,9 @@ int loadLevelFiles(const char* folderPath, char*** levelFiles) {
             }
 
             // Build full file path
-            size_t pathLength = strlen(folderPath) + strlen(entry->d_name) + 2;
+            size_t pathLength = strlen(folderPath) + strlen(ent->d_name) + 2; //2 is null terminator
             (*levelFiles)[count] = malloc(pathLength);
-            snprintf((*levelFiles)[count], pathLength, "%s/%s", folderPath, entry->d_name);
+            snprintf((*levelFiles)[count], pathLength, "%s/%s", folderPath, ent->d_name);
 
             count++;
         }
@@ -246,6 +257,7 @@ int loadLevelFiles(const char* folderPath, char*** levelFiles) {
 }
 
 void ensureSavesDirectoryExists() {
+    // Just to make sure
     #ifdef _WIN32
         _mkdir("saves");
     #else
@@ -268,6 +280,7 @@ bool saveGame(GameData* state) {
     // Create JSON object
     cJSON* root = cJSON_CreateObject();
 
+    // Create an array for each entities
     cJSON* shooters = cJSON_CreateArray();
     for (int i = 0; i < 2; i++)
     {
@@ -282,12 +295,13 @@ bool saveGame(GameData* state) {
         cJSON_AddNumberToObject(shooter, "velocityY", state->shooters[i].velocityY);
         cJSON_AddNumberToObject(shooter, "time", state->shooters[i].time);
         cJSON_AddBoolToObject(shooter, "onGround", state->shooters[i].onGround);
+        cJSON_AddStringToObject(shooter, "textureLocation", state->shooters[i].textureLocation);
         cJSON_AddNumberToObject(shooter, "currentFrame", state->shooters[i].currentFrame);
         cJSON_AddNumberToObject(shooter, "spriteWidth", state->shooters[i].frameWidth);
         cJSON_AddNumberToObject(shooter, "spriteHeight", state->shooters[i].frameHeight);
         cJSON_AddNumberToObject(shooter, "totalFrames", state->shooters[i].totalFrames);
         cJSON_AddNumberToObject(shooter, "animationTimer", 0.0);
-        cJSON_AddNumberToObject(shooter, "frameDelay", 0.95);
+        cJSON_AddNumberToObject(shooter, "frameDelay", state->shooters[i].frameDelay);
         cJSON_AddBoolToObject(shooter, "dead", state->shooters[i].dead);
         cJSON_AddItemToArray(shooters, shooter);
     }
@@ -320,12 +334,12 @@ bool saveGame(GameData* state) {
         cJSON_AddBoolToObject(enemy, "active", state->enemies1[i].active);
         cJSON_AddNumberToObject(enemy, "currentFrame", state->enemies1[i].currentFrame);
         cJSON_AddNumberToObject(enemy, "speed", state->enemies1[i].speed);
+        cJSON_AddStringToObject(enemy, "textureLocation", state->enemies1[i].textureLocation);
         cJSON_AddNumberToObject(enemy, "spriteWidth", state->enemies1[i].frameWidth);
         cJSON_AddNumberToObject(enemy, "spriteHeight", state->enemies1[i].frameHeight);
         cJSON_AddNumberToObject(enemy, "totalFrames", state->enemies1[i].totalFrames);
         cJSON_AddNumberToObject(enemy, "animationTimer", 0.0);
-        cJSON_AddStringToObject(enemy, "sprite", "enemy1SpriteSheet");
-        cJSON_AddNumberToObject(enemy, "frameDelay", 0.95);
+        cJSON_AddNumberToObject(enemy, "frameDelay", state->enemies1[i].frameDelay);
         cJSON_AddItemToArray(enemies1, enemy);
     }
     cJSON_AddItemToObject(root, "enemies1", enemies1);
@@ -341,13 +355,13 @@ bool saveGame(GameData* state) {
         cJSON_AddBoolToObject(enemy, "active", state->enemies2[i].active);
         cJSON_AddNumberToObject(enemy, "speed", state->enemies2[i].speed);
         cJSON_AddNumberToObject(enemy, "platformIndex", state->enemies2[i].platformIndex);
+        cJSON_AddStringToObject(enemy, "textureLocation", state->enemies2[i].textureLocation);
         cJSON_AddNumberToObject(enemy, "spriteWidth", state->enemies2[i].frameWidth);
         cJSON_AddNumberToObject(enemy, "spriteHeight", state->enemies2[i].frameHeight);
         cJSON_AddNumberToObject(enemy, "totalFrames", state->enemies2[i].totalFrames);
         cJSON_AddNumberToObject(enemy, "currentFrame", state->enemies2[i].currentFrame);
         cJSON_AddNumberToObject(enemy, "animationTimer", 0.0);
-        cJSON_AddNumberToObject(enemy, "frameDelay", 0.95);
-        cJSON_AddStringToObject(enemy, "sprite", "enemy2SpriteSheet");
+        cJSON_AddNumberToObject(enemy, "frameDelay", state->enemies2[i].frameDelay);
         cJSON_AddItemToArray(enemies2, enemy);
     }
     cJSON_AddItemToObject(root, "enemies2", enemies2);
@@ -398,11 +412,11 @@ bool saveGame(GameData* state) {
 }
 
 SaveFileInfo* loadSaveFiles(int* count) {
-    DIR* dir;
-    struct dirent* ent;
+    DIR* dir; 
+    struct dirent* ent; // directory entries
     *count = 0;
     
-    // First count number of save files
+    // count number of save files
     dir = opendir("saves");
     if (dir == NULL) {
         ensureSavesDirectoryExists();
@@ -424,21 +438,22 @@ SaveFileInfo* loadSaveFiles(int* count) {
     
     // Fill array with save file info
     dir = opendir("saves");
-    int index = 0;
+    int i = 0;
     while ((ent = readdir(dir)) != NULL) {
         if (strstr(ent->d_name, ".json") != NULL) {
-            snprintf(saves[index].filename, sizeof(saves[index].filename), "saves/%s", ent->d_name);
+            snprintf(saves[i].filename, sizeof(saves[i].filename), "saves/%s", ent->d_name);
             
-            // Extract date/time from filename (assuming format: save_YYYYMMDD_HHMMSS.json)
+            // Extract date/time from filename
             char year[5], month[3], day[3], hour[3], min[3], sec[3];
             sscanf(ent->d_name, "save_%4s%2s%2s_%2s%2s%2s.json", 
                    year, month, day, hour, min, sec);
             
-            snprintf(saves[index].displayName, sizeof(saves[index].displayName),
+            // Store into array for display in load game
+            snprintf(saves[i].displayName, sizeof(saves[i].displayName),
                     "Saved: %s/%s/%s %s:%s:%s",
                     year, month, day, hour, min, sec);
             
-            index++;
+            i++;
         }
     }
     closedir(dir);

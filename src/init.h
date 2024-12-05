@@ -1,8 +1,11 @@
 #ifndef INIT_H
 #define INIT_H
 
+#include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
+#include <math.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_image.h>
@@ -31,7 +34,7 @@
 // Structure to hold save file information
 typedef struct {
     char filename[256];
-    char displayName[64];  // Will hold formatted date/time
+    char displayName[256];  
 } SaveFileInfo;
 
 typedef struct {
@@ -53,6 +56,7 @@ typedef struct {
     int ammo;
     int score;
     double time;
+    char textureLocation[256];
     SDL_Texture* texture;
     int currentFrame;
     int frameWidth;          
@@ -69,7 +73,8 @@ typedef struct {
     bool active;   
     int platformIndex;       
     int currentFrame;        
-    float speed;             
+    float speed;      
+    char textureLocation[256];       
     SDL_Texture* texture;    
     int frameWidth;          
     int frameHeight;         
@@ -124,17 +129,16 @@ typedef struct {
     bool showLevelSelection;
     bool quit;
     bool isPlayer1Turn;
+    int selectedLevelIndex;
+    char** levelFiles;
+    int levelCount;
 
     SDL_Window* window;
     SDL_Renderer* renderer;
     TTF_Font* font;
     SDL_Texture* backgroundTexture;
     SDL_Texture* pauseTexture;
-    SDL_Texture* enemy1SpriteSheet;
-    SDL_Texture* enemy2SpriteSheet;
     SDL_Texture* bulletSpriteSheet;
-    SDL_Texture* shooter1SpriteSheetIdle;
-    SDL_Texture* shooter2SpriteSheetIdle;
 } GameData;
 
 bool init(GameData* g);

@@ -1,7 +1,4 @@
 #include "render.h"
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #define PI 3.14159265358979323846
 #define SQUARE_WIDTH 2
@@ -46,9 +43,9 @@ void freeHillNoise(HillNoise* hn) {
     free(hn->offsets);
 }
 
-void renderBackground(GameData g, SDL_Renderer* renderer, SDL_Texture* textureBackground, int screen_width, int screen_height) {
+void renderBackground(GameData g, SDL_Renderer* renderer, int screen_width, int screen_height) {
     SDL_Rect bgRect = {(int)(g.cameraX), 0, screen_width, screen_height};
-    SDL_RenderCopy(renderer, textureBackground, &bgRect, NULL);
+    SDL_RenderCopy(renderer, g.backgroundTexture, &bgRect, NULL);
 }
 
 void renderTerrains(GameData g, SDL_Renderer* renderer, HillNoise* hn, float startX, SDL_Color color, float heightScale, int screen_height) {
@@ -141,7 +138,7 @@ void renderHearts(GameData g, SDL_Renderer* renderer) {
 
 void drawShooter(GameData g, SDL_Renderer* renderer) {
     Shooter* currentShooter = &g.shooters[g.isPlayer1Turn ? 0 : 1];
-    SDL_Texture* currentTexture = g.isPlayer1Turn ? g.shooter1SpriteSheetIdle : g.shooter2SpriteSheetIdle;
+    SDL_Texture* currentTexture = currentShooter->texture;
 
     currentShooter->animationTimer += g.deltaTime;
     if (currentShooter->animationTimer >= currentShooter->frameDelay) {
@@ -194,40 +191,59 @@ void drawCollectibles(GameData g, SDL_Renderer* renderer) {
 
 void drawEnemies1(GameData g, SDL_Renderer* renderer) {
     for (int i = 0; i < g.numEnemies1; i++) {
-        if (g.enemies1[i].active) {
+        Enemy* currentEnemy = &g.enemies1[i];
+        SDL_Texture* currentTexture = currentEnemy->texture;
+        
+        // animation update
+        currentEnemy->animationTimer += g.deltaTime;
+        if (currentEnemy->animationTimer >= currentEnemy->frameDelay) {
+            currentEnemy->currentFrame = (currentEnemy->currentFrame + 1) % currentEnemy->totalFrames;
+            currentEnemy->animationTimer = 0;
+        }
+
+        if (currentEnemy->active) {
             SDL_Rect srcRect;
-            srcRect.x = g.enemies1[i].currentFrame * g.enemies1[i].frameWidth;
+            srcRect.x = currentEnemy->currentFrame * currentEnemy->frameWidth;
             srcRect.y = 0;  
-            srcRect.w = g.enemies1[i].frameWidth;
-            srcRect.h = g.enemies1[i].frameHeight;
+            srcRect.w = currentEnemy->frameWidth;
+            srcRect.h = currentEnemy->frameHeight;
 
             SDL_Rect dstRect;
-            dstRect.x = (int)(g.enemies1[i].x - g.cameraX); 
-            dstRect.y = (int)(g.enemies1[i].y);
-            dstRect.w = g.enemies1[i].width;  
-            dstRect.h = g.enemies1[i].height;
+            dstRect.x = (int)(currentEnemy->x - g.cameraX); 
+            dstRect.y = (int)(currentEnemy->y);
+            dstRect.w = currentEnemy->width;  
+            dstRect.h = currentEnemy->height;
 
-            SDL_RenderCopy(renderer, g.enemies1[i].texture, &srcRect, &dstRect);
+            SDL_RenderCopy(renderer, currentTexture, &srcRect, &dstRect);
         }
     }
 }
 
 void drawEnemies2(GameData g, SDL_Renderer* renderer) {
     for (int i = 0; i < g.numEnemies2; i++) {
-        if (g.enemies2[i].active) {
+        Enemy* currentEnemy = &g.enemies2[i];
+        SDL_Texture* currentTexture = currentEnemy->texture;
+
+        // Animation update
+        currentEnemy->animationTimer += g.deltaTime;
+        if (currentEnemy->animationTimer >= currentEnemy->frameDelay) {
+            currentEnemy->currentFrame = (currentEnemy->currentFrame + 1) % currentEnemy->totalFrames;
+            currentEnemy->animationTimer = 0;
+        }
+        if (currentEnemy->active) {
             SDL_Rect srcRect;
-            srcRect.x = g.enemies2[i].currentFrame * g.enemies2[i].frameWidth;
+            srcRect.x = currentEnemy->currentFrame * currentEnemy->frameWidth;
             srcRect.y = 0; 
-            srcRect.w = g.enemies2[i].frameWidth;
-            srcRect.h = g.enemies2[i].frameHeight;
+            srcRect.w = currentEnemy->frameWidth;
+            srcRect.h = currentEnemy->frameHeight;
 
             SDL_Rect dstRect;
-            dstRect.x = (int)(g.enemies2[i].x - g.cameraX); 
-            dstRect.y = (int)(g.enemies2[i].y);
-            dstRect.w = g.enemies2[i].width;  
-            dstRect.h = g.enemies2[i].height;
+            dstRect.x = (int)(currentEnemy->x - g.cameraX); 
+            dstRect.y = (int)(currentEnemy->y);
+            dstRect.w = currentEnemy->width;  
+            dstRect.h = currentEnemy->height;
 
-            SDL_RenderCopy(renderer, g.enemies2[i].texture, &srcRect, &dstRect);
+            SDL_RenderCopy(renderer, currentTexture, &srcRect, &dstRect);
         }
     }
 }
@@ -291,15 +307,13 @@ void drawFinishFlag(GameData g, SDL_Renderer* renderer, int screen_height) {
     SDL_RenderFillRect(renderer, &flagRect);
 }
 
-void drawPauseButton(GameData g, SDL_Renderer* renderer, SDL_Texture* texturePause) {
+void drawPauseButton(GameData g, SDL_Renderer* renderer) {
     SDL_Rect pauseButtonRect = {1820, 50, 100, 100};
-    SDL_RenderCopy(renderer, texturePause, NULL, &pauseButtonRect);
+    SDL_RenderCopy(renderer, g.pauseTexture, NULL, &pauseButtonRect);
 }
 
 void render(GameData g,
             SDL_Renderer* renderer, 
-            SDL_Texture* textureBackground, 
-            SDL_Texture* texturePause, 
             TTF_Font* font, 
             HillNoise* hn,
             int screen_width,
@@ -308,16 +322,16 @@ void render(GameData g,
     SDL_RenderClear(renderer);
 
     // Render background
-    renderBackground(g, renderer, textureBackground, screen_width, screen_height);
+    renderBackground(g, renderer, screen_width, screen_height);
 
     // Render generated terrain
     renderTerrains(g, renderer, hn, 0, (SDL_Color){34, 139, 34, 255}, 500, screen_height);
-    renderTerrains(g, renderer, hn, 0, (SDL_Color){144, 238, 144, 255}, 300, screen_height);
+    renderTerrains(g, renderer, hn, 0, (SDL_Color){144, 238, 54, 255}, 300, screen_height);
 
-    // Render pause button
-    drawPauseButton(g, renderer, texturePause);
+    // Draw pause button
+    drawPauseButton(g, renderer);
 
-    // Draw game elements
+    // Draw game entities
     drawPlatforms(g, renderer);
     drawCollectibles(g, renderer);
     drawAmmo(g, renderer);

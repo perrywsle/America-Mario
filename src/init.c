@@ -1,5 +1,4 @@
 #include "init.h"
-#include <SDL2/SDL_image.h>
 
 #if defined(IMGUI_IMPL_OPENGL_LOADER_GL3W)
 #include "GL/gl3w.h"    // Initialize with gl3wInit()
@@ -90,7 +89,7 @@ bool init(GameData* g) {
         return false;
     }
 
-    g->font = TTF_OpenFont("arial.ttf", 24);
+    g->font = TTF_OpenFont("src/arial.ttf", 24);
     if (g->font == NULL) {
         printf("Failed to load font: %s\n", TTF_GetError());
         return false;
@@ -122,29 +121,37 @@ bool loadMedia(GameData* g) {
     }
     SDL_FreeSurface(imgPause);
 
-    g->enemy1SpriteSheet = IMG_LoadTexture(g->renderer, "Assets/Characters/Enemies/Ghost/Spritesheets/ghost.png");
-    if (!g->enemy1SpriteSheet) {
-        printf("Error loading sprite sheet1\n");
-        success = false;
+    for (int i = 0; i < g->numEnemies1; i++)
+    {
+        g->enemies1[i].texture = IMG_LoadTexture(g->renderer, g->enemies1[i].textureLocation);
+        if (!g->enemies1[i].texture) {
+            printf("Error loading sprite sheet1\n");
+            success = false;
+        }
     }
-    g->enemy2SpriteSheet = IMG_LoadTexture(g->renderer, "Assets/Characters/Enemies/Crab/Spritesheets/crab-idle.png");
-    if (!g->enemy2SpriteSheet) {
-        printf("Error loading sprite sheet2\n");
-        success = false;
+    for (int i = 0; i < g->numEnemies2; i++)
+    {
+        g->enemies2[i].texture = IMG_LoadTexture(g->renderer, g->enemies2[i].textureLocation);
+        if (!g->enemies2[i].texture) {
+            printf("Error loading sprite sheet2\n");
+            success = false;
+        }
     }
+    
+    
     g->bulletSpriteSheet = IMG_LoadTexture(g->renderer, "Assets/Fx/Spritesheets/player-shoot.png");
     if (!g->bulletSpriteSheet) {
         printf("Error loading bullet sprite sheet\n");
         success = false;
     }
-    g->shooter1SpriteSheetIdle = IMG_LoadTexture(g->renderer, "Assets/Characters/Player/spritesheets/player-idle.png");
-    if (!g->shooter1SpriteSheetIdle) {
-        printf("Error loading shooter 1 idle sprite sheet\n");
+    g->shooters[0].texture = IMG_LoadTexture(g->renderer, g->shooters[0].textureLocation);
+    if (!g->shooters[0].texture) {
+        printf("Error loading shooter 1 sprite sheet\n");
         success = false;
     }
-    g->shooter2SpriteSheetIdle = IMG_LoadTexture(g->renderer, "Assets/Characters/Player/spritesheets/player-run.png");
-    if (!g->shooter2SpriteSheetIdle) {
-        printf("Error loading shooter 1 idle sprite sheet\n");
+    g->shooters[1].texture = IMG_LoadTexture(g->renderer, g->shooters[1].textureLocation);
+    if (!g->shooters[1].texture) {
+        printf("Error loading shooter 2 sprite sheet\n");
         success = false;
     }
 
@@ -217,6 +224,7 @@ void initializeGame(GameData* state, const char* levelFile, int screen_width, in
         state->shooters[i].ammo = cJSON_GetObjectItem(shooterItem, "ammo")->valueint;
         state->shooters[i].score = cJSON_GetObjectItem(shooterItem, "score")->valueint;
         state->shooters[i].onGround = cJSON_IsTrue(cJSON_GetObjectItem(shooterItem, "onGround"));
+        strcpy(state->shooters[i].textureLocation, cJSON_GetObjectItem(shooterItem, "textureLocation")->valuestring);
         state->shooters[i].currentFrame = cJSON_GetObjectItem(shooterItem, "currentFrame")->valueint;
         state->shooters[i].frameWidth = cJSON_GetObjectItem(shooterItem, "spriteWidth")->valueint;
         state->shooters[i].frameHeight = cJSON_GetObjectItem(shooterItem, "spriteHeight")->valueint;
@@ -256,7 +264,7 @@ void initializeGame(GameData* state, const char* levelFile, int screen_width, in
         state->enemies1[i].active = cJSON_IsTrue(cJSON_GetObjectItem(enemyItem, "active"));
         state->enemies1[i].currentFrame = cJSON_GetObjectItem(enemyItem, "currentFrame")->valueint;
         state->enemies1[i].speed = (float)cJSON_GetObjectItem(enemyItem, "speed")->valuedouble;
-        state->enemies1[i].texture = state->enemy1SpriteSheet;
+        strcpy(state->enemies1[i].textureLocation, cJSON_GetObjectItem(enemyItem, "textureLocation")->valuestring);
         state->enemies1[i].frameWidth = cJSON_GetObjectItem(enemyItem, "spriteWidth")->valueint;
         state->enemies1[i].frameHeight = cJSON_GetObjectItem(enemyItem, "spriteHeight")->valueint;
         state->enemies1[i].totalFrames = cJSON_GetObjectItem(enemyItem, "totalFrames")->valueint;
@@ -280,7 +288,7 @@ void initializeGame(GameData* state, const char* levelFile, int screen_width, in
         state->enemies2[i].currentFrame = cJSON_GetObjectItem(enemyItem, "currentFrame")->valueint;
         state->enemies2[i].speed = (float)cJSON_GetObjectItem(enemyItem, "speed")->valuedouble;
         state->enemies2[i].platformIndex = cJSON_GetObjectItem(enemyItem, "platformIndex")->valueint;
-        state->enemies2[i].texture = state->enemy2SpriteSheet;
+        strcpy(state->enemies2[i].textureLocation, cJSON_GetObjectItem(enemyItem, "textureLocation")->valuestring);
         state->enemies2[i].frameWidth = cJSON_GetObjectItem(enemyItem, "spriteWidth")->valueint;
         state->enemies2[i].frameHeight = cJSON_GetObjectItem(enemyItem, "spriteHeight")->valueint;
         state->enemies2[i].totalFrames = cJSON_GetObjectItem(enemyItem, "totalFrames")->valueint;
@@ -318,6 +326,11 @@ void initializeGame(GameData* state, const char* levelFile, int screen_width, in
         state->ammos[i].collected = cJSON_IsTrue(cJSON_GetObjectItem(ammoItem, "collected"));
     }
     printf("Ammos data loaded\n");
+
+    if (!loadMedia(state)) {
+        printf("Failed to load media!\n");
+        return;
+    }
 
     // Free JSON resources
     cJSON_Delete(root);

@@ -1,15 +1,16 @@
 #include "shooter.h"
 
+// shoot bullet on mouse click
 void shootBullet(GameData* g, float targetX, float targetY) {
     Shooter* shooter = &g->shooters[g->isPlayer1Turn? 0:1];
-    // Don't shoot if no ammo
+    // No shoot if no ammo
     if (shooter->ammo <= 0) return;
 
     // Adjust target position for camera
     targetX += g->cameraX;
 
     // Calculate direction from actual shooter position
-    float shooterCenterX = shooter->x + 50;  // Keep the center offset
+    float shooterCenterX = shooter->x + 50; 
     float shooterCenterY = shooter->y + 50;
     
     // Account for camera position in both target and shooter positions
@@ -24,7 +25,7 @@ void shootBullet(GameData* g, float targetX, float targetY) {
     for (int i = 0; i < shooter->ammo; i++) { 
         if (!g->bullets[i].active) {
             // Initialize bullet at shooter's actual position
-            g->bullets[i].x = shooterCenterX;  // Use actual shooter position
+            g->bullets[i].x = shooterCenterX;  
             g->bullets[i].y = shooterCenterY;
             g->bullets[i].dirX = dirX;
             g->bullets[i].dirY = dirY;
@@ -154,7 +155,7 @@ void updateCollectibles(GameData* g) {
     for (int i = 0; i < g->numCollectibles; i++) {
         if (!g->collectibles[i].collected && checkCollectibleCollision(shooter, &g->collectibles[i])) {
             g->collectibles[i].collected = true;
-            shooter->score += 10;
+            shooter->score += 5;
         }
     }
 }
@@ -173,6 +174,7 @@ void updateEnemies(GameData* g, int screen_width) {
     Shooter* shooter = &g->shooters[g->isPlayer1Turn? 0:1];
     for (int i = 0; i < g->numEnemies1; i++) {
         if (g->enemies1[i].active) {
+            // move towards shooter if in screen
             if (g->enemies1[i].x >= g->cameraX && g->enemies1[i].x <= g->cameraX + screen_width) {
                 float dx = shooter->x - g->enemies1[i].x;
                 float dy = shooter->y - g->enemies1[i].y;
@@ -181,12 +183,6 @@ void updateEnemies(GameData* g, int screen_width) {
                 if (distance > 0) {
                     g->enemies1[i].x += (dx / distance) * g->enemies1[i].speed * g->deltaTime;
                     g->enemies1[i].y += (dy / distance) * g->enemies1[i].speed * g->deltaTime;
-                }
-                
-                g->enemies1[i].animationTimer += g->deltaTime;
-                if (g->enemies1[i].animationTimer >= g->enemies1[i].frameDelay) {
-                    g->enemies1[i].currentFrame = (g->enemies1[i].currentFrame + 1) % g->enemies1[i].totalFrames;
-                    g->enemies1[i].animationTimer = 0;
                 }
             }
         }
@@ -214,13 +210,6 @@ void updateEnemies(GameData* g, int screen_width) {
                     g->enemies2[i].x = fmax(g->platforms[pIndex].x, 
                                          fmin(g->enemies2[i].x, 
                                              g->platforms[pIndex].x + g->platforms[pIndex].width - g->enemies2[i].width));
-                }
-
-                // Animation update should happen regardless of platform status
-                g->enemies2[i].animationTimer += g->deltaTime;
-                if (g->enemies2[i].animationTimer >= g->enemies2[i].frameDelay) {
-                    g->enemies2[i].currentFrame = (g->enemies2[i].currentFrame + 1) % g->enemies2[i].totalFrames;
-                    g->enemies2[i].animationTimer = 0;
                 }
             }
         }
@@ -353,8 +342,7 @@ void updatePlayer(GameData* g, Shooter* shooter, bool leftPressed, bool rightPre
     handleBulletEnemyCollisions(g);
 }
 
-
-void updateGame(GameData* g, HillNoise* hn, int screen_width, int screen_height, char** levelFiles, int selectedLevelIndex, bool leftPressed, bool rightPressed, bool spacePressed) {
+void updateGame(GameData* g, HillNoise* hn, int screen_width, int screen_height, bool leftPressed, bool rightPressed, bool spacePressed) {
     static int player1Score, player1Health;
     static double player1Time;
 
@@ -365,7 +353,7 @@ void updateGame(GameData* g, HillNoise* hn, int screen_width, int screen_height,
     updatePlayer(g, currentShooter, leftPressed, rightPressed, spacePressed, screen_width, screen_height);
     currentShooter->time += g->deltaTime;
 
-    // Store Player 1's state when it is Player 1's turn
+    // Store Player 1's state to be retrieved after player 2 starts game
     if (g->isPlayer1Turn) {
         player1Score = currentShooter->score;
         player1Health = currentShooter->health;
@@ -376,7 +364,7 @@ void updateGame(GameData* g, HillNoise* hn, int screen_width, int screen_height,
     if (currentShooter->dead || checkFinish(g)) {
         if (g->isPlayer1Turn) {
             cleanupGameState(g);
-            initializeGame(g, levelFiles[selectedLevelIndex], screen_width, screen_height);
+            initializeGame(g, g->levelFiles[g->selectedLevelIndex], screen_width, screen_height);
             g->isPlayer1Turn = !g->isPlayer1Turn;
             g->isPaused = true;
             g->shooters[0].score = player1Score;
@@ -390,5 +378,5 @@ void updateGame(GameData* g, HillNoise* hn, int screen_width, int screen_height,
     }
 
     // Render the game state
-    render(*g, g->renderer, g->backgroundTexture, g->pauseTexture, g->font, hn, screen_width, screen_height);
+    render(*g, g->renderer, g->font, hn, screen_width, screen_height);
 }

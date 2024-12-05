@@ -6,8 +6,6 @@
 
 void render(GameData g,
             SDL_Renderer* renderer, 
-            SDL_Texture* textureBackground, 
-            SDL_Texture* texturePause, 
             TTF_Font* font, 
             HillNoise* hn,
             int screen_width,

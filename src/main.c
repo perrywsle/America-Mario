@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "init.h"
 #include "gui.h"
 #include "render.h"
@@ -22,26 +21,20 @@ int main(int argc, char* argv[]) {
     int screen_width, screen_height;
     SDL_GetWindowSize(g.window, &screen_width, &screen_height);
 
-    if (!loadMedia(&g)) {
-        printf("Failed to load media!\n");
-        return 1;
-    }
-
     float terrainSizes[] = {50.0f, 100.0f, 200.0f};
     initHillNoise(hn, terrainSizes, sizeof(terrainSizes) / sizeof(terrainSizes[0]));
 
     SDL_Event e;
-    char** levelFiles = NULL;
-    int levelCount = loadLevelFiles("levels", &levelFiles);
+    g.levelFiles = NULL;
+    g.levelCount = loadLevelFiles("levels", &g.levelFiles);
 
-    if (levelCount < 0) {
+    if (g.levelCount < 0) {
         printf("Failed to load levels!\n");
         return 1;
     }
 
-    int selectedLevelIndex = 0; 
-
     g.showLevelSelection = true;
+    g.selectedLevelIndex = 0;
 
     PauseButton pauseButton_instance = {
         .x = 1820,
@@ -116,16 +109,16 @@ int main(int argc, char* argv[]) {
         igNewFrame();
 
         if (g.showLevelSelection) {
-            loadMainMenu(&g, screen_width, screen_height, levelFiles, levelCount, &selectedLevelIndex);
+            loadMainMenu(&g, screen_width, screen_height);
         }
         if (!g.isPaused && !g.showLevelSelection) {
-            updateGame(&g, hn, screen_width, screen_height, levelFiles, selectedLevelIndex, leftPressed, rightPressed, spacePressed);
+            updateGame(&g, hn, screen_width, screen_height, leftPressed, rightPressed, spacePressed);
         }
         if (g.isPaused && !g.showSummaryWindow) {
-            loadPause(&g, screen_width, screen_height, levelFiles, selectedLevelIndex);
+            loadPause(&g, screen_width, screen_height);
         }
         if (g.showSummaryWindow) {
-            loadSummary(&g, screen_width, screen_height, levelFiles, &selectedLevelIndex);
+            loadSummary(&g, screen_width, screen_height);
         }
         if (g.quit) break;
 
@@ -137,7 +130,7 @@ int main(int argc, char* argv[]) {
 
     clear(&g);
     freeHillNoise(hn);
-    freeLevelFiles(levelFiles, levelCount);
+    freeLevelFiles(g.levelFiles, g.levelCount);
     TTF_CloseFont(g.font);
     TTF_Quit();
     SDL_Quit();
